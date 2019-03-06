@@ -10,7 +10,7 @@ void setup() {
 
 void loop() {
   // Calculating the distance
-  distance = getSonarDistance(TRIG, ECHO);
+  float distance = getSonarDistance(TRIG, ECHO);
   // Prints the distance on the Serial Monitor
   Serial.print("Distance: ");
   Serial.println(distance);
