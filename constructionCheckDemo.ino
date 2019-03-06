@@ -34,6 +34,7 @@ void loop() {
 
   // Turn to avoid object
   turnLeft1();
+  delay(3000);
 
   // Drive straight again for a bit
   driveStraight();
