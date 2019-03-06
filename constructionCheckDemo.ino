@@ -27,7 +27,7 @@ void setup() {
 
 void loop() {
   // Drive straight
-  driveStraight();
+  driveForward();
 
   // Drive until object is detected
   while(sensorLib.getSonarDistance(TRIG, ECHO) > 8) {}
@@ -37,7 +37,7 @@ void loop() {
   delay(3000);
 
   // Drive straight again for a bit
-  driveStraight();
+  driveForward();
   delay(5000);
 
   // Stop motors
@@ -54,7 +54,7 @@ void loop() {
   delay(1000);
 }
 
-void driveStraight(enA, enB, right1, right2, left1, left2) {
+void driveForward(enA, enB, right1, right2, left1, left2) {
   // Write PWM to turn on motor (full power)
   analogWrite(enA, 255);
   analogWrite(enB, 255);
