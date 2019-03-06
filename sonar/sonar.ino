@@ -18,7 +18,7 @@ void loop() {
   delay(2000);
 }
 
-float getSonarDistance(trigPin, echoPin) {
+float getSonarDistance(int trigPin, int echoPin) {
   /*
    * returns distance from given sonar to object in cm.
    * Called when distance for sonar is required.
