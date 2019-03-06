@@ -1,18 +1,11 @@
-void setup() {
-  Serial.begin(9600);
+#include "Arduino.h"
+#include "SensorLib.h"
+
+SensorLib::SensorLib() {
+    //constructor
 }
 
-void loop() {
-  float ambientT = getAmbientT(A0);
-  Serial.println(ambientT);
-
-  while(!candleDetected(A0, ambientT)){
-    delay(500);
-  }
-  Serial.println("Detected");
-}
-
-float getAmbientT(int sensorPin) {
+float SensorLib::getAmbientT(int sensorPin) {
   /*
    * returns ambient Temperature of the surroundings.
    * To be called during start up of device.
@@ -36,7 +29,7 @@ float getAmbientT(int sensorPin) {
   return temperature;
 }
 
-bool candleDetected(int sensorPin, float ambientT) {
+bool SensorLib::candleDetected(int sensorPin, float ambientT) {
   /*
    * Requires an input of the ambiet temperature of the surrounding
    * to be taken during start up.
@@ -60,7 +53,16 @@ bool candleDetected(int sensorPin, float ambientT) {
 
   float temperature = (voltage - 0.5) * 100;
 
-  Serial.println(temperature);
+  //Serial.println(temperature);
   return (temperature - ambientT) > threshold;
 }
 
+void SensorLib::toggleLED(int pin) {
+  //Toggles the output of a digital pin
+  pinMode(pin, OUTPUT);
+  if (digitalRead(pin) == HIGH) {
+    digitalWrite(pin, LOW);
+  } else {
+    digitalWrite(pin, HIGH);
+  }
+}
