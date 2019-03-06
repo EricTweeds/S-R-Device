@@ -10,6 +10,7 @@ class SensorLib
     float getAmbientT(int sensorPin);
     bool candleDetected(int sensorPin, float ambientT);
     void toggleLED(int pin);
+    float getSonarDistance(int trigPin, int echoPin);
 };
 
 #endif
