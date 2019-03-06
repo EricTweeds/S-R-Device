@@ -54,7 +54,7 @@ void loop() {
   delay(1000);
 }
 
-void driveForward(enA, enB, right1, right2, left1, left2) {
+void driveForward(int enA, int enB, int right1, int right2, int left1, int left2) {
   // Write PWM to turn on motor (full power)
   analogWrite(enA, 255);
   analogWrite(enB, 255);
@@ -65,12 +65,12 @@ void driveForward(enA, enB, right1, right2, left1, left2) {
   digitalWrite(left2, HIGH);
 }
 
-void stopMotors(enA, enB) {
+void stopMotors(int enA, int enB) {
   analogWrite(enA, 0);
   analogWrite(enB, 0);
 }
 
-void turnLeft1(enA, enB, right1, right2, left1, left2) {
+void turnLeft1(int enA, int enB, int right1, int right2, int left1, int left2) {
   /*
   * Turn left by turning the left wheel backwards
   */
@@ -84,7 +84,7 @@ void turnLeft1(enA, enB, right1, right2, left1, left2) {
   digitalWrite(left2, LOW);
 }
 
-void turnLeft2(enA, enB, right1, right2, left1, left2) {
+void turnLeft2(int enA, int enB, int right1, int right2, int left1, int left2) {
   /*
   * Turn left by turning the left wheel off
   */
