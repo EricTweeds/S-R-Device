@@ -39,7 +39,7 @@ bool SensorLib::candleDetected(int sensorPin, float ambientT) {
    */
   const int WaitTime = 500; //milliseconds between each temperature scan.
   const int samples = 3; //Number of samples used in average
-  const float threshold = 0.5; //temperature change that signifies candle is present
+  const float threshold = 2; //temperature change that signifies candle is present
 
   int sensorSum = analogRead(sensorPin);
 
