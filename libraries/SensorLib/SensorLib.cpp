@@ -1,6 +1,19 @@
 #include "Arduino.h"
 #include "SensorLib.h"
 
+#define S0 3
+#define S1 4
+#define S2 5
+#define S3 6
+#define lights 7
+#define sensorOut 2
+
+struct RGB {
+  int R;
+  int G;
+  int B;
+};
+
 SensorLib::SensorLib() {
     //constructor
 }
@@ -64,5 +77,45 @@ void SensorLib::toggleLED(int pin) {
     digitalWrite(pin, LOW);
   } else {
     digitalWrite(pin, HIGH);
+  }
+}
+
+void SensorLib::logColourVal(RGB colour) {
+  Serial.print("R=");
+  Serial.println(colour.R);
+  Serial.print("G=");
+  Serial.println(colour.G);
+  Serial.print("B=");
+  Serial.println(colour.B);
+}
+
+RGB SensorLib::getColour() {
+  RGB colour;
+  //red
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
+  colour.R = pulseIn(sensorOut, LOW);
+
+  //Green
+  digitalWrite(S2,HIGH);
+  digitalWrite(S3,HIGH);
+  // Reading the output frequency
+  colour.G = pulseIn(sensorOut, LOW);
+
+  //Blue
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,HIGH);
+  // Reading the output frequency
+  colour.B = pulseIn(sensorOut, LOW);
+
+  return colour;
+}
+
+void SensorLib::setCSLights(bool on) {
+  pinMode(lights, OUTPUT);
+  if (on) {
+    digitalWrite(lights, HIGH);
+  } else {
+    digitalWrite(lights, LOW);
   }
 }
