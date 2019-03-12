@@ -12,6 +12,9 @@ MapManagerLib::MapManagerLib() {
 void MapManagerLib::setMapValue(int x, int y, char value) {
     // assuming value is an acceptable char value
     // assuming that x and y are less than 6
+    if (x >= size || x < 0 || y >= size || y < 0) {
+        return;
+    }
     MAP[x][y] = value;
 }
 
