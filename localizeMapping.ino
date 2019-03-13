@@ -43,6 +43,7 @@ void loop() {
 }
 
 // Drives robot to given location
+// Perhaps this function should go into the motor lib
 void driveToLocation(int targetX, int targetY) {
     if (current.direction.isFacingX) {
         bool isFacingWrongDirection = (current.direction.isForward) ? current.x > targetX : current.x < targetX;
