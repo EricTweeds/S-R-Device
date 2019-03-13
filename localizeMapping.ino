@@ -42,6 +42,65 @@ void loop() {
     
 }
 
+// Drives robot to given location
+void driveToLocation(int targetX, int targetY) {
+    if (current.direction.isFacingX) {
+        bool isFacingWrongDirection = (current.direction.isForward) ? current.x > targetX : current.x < targetX;
+        if (isFacingWrongDirection && current.y == targetY) {
+            // y is correct but facing wrong dir
+            // motors.turnAngle(180);
+        } else if (isFacingWrongDirection) {
+            if (current.y > targetY) {
+                // turn 90 CCW
+            } else {
+                // turn 90 CW
+            }
+        }
+    } else {
+        bool isFacingWrongDirection = (current.direction.isForward) ? current.y > targetY : current.y < targetY;
+        if (isFacingWrongDirection && current.x == targetX) {
+            // y is correct but facing wrong dir
+            // motors.turnAngle(180);
+        } else if (isFacingWrongDirection) {
+            if (current.x > targetX) {
+                // turn 90 CCW
+            } else {
+                // turn 90 CW
+            }
+        }
+    }
+
+    // motors.driveForward()
+
+    // Drive until inline with target location
+    while (current.x != targetX && current.y != targetY) {
+        // update current location from accelerometer
+    }
+
+    if (current.direction.isFacingX) {
+        if (current.y > targetY) {
+            // turn 90 CCW
+        } else if (current.y < targetY) {
+            // turn 90 CW
+        }
+    } else {
+        if (current.x > targetX) {
+            // turn 90 CCW
+        } else if (current.x < targetX) {
+            // turn 90 CW
+        }
+    }
+
+    // motors.driveForward()
+
+    // Drive until inline with target location
+    while (current.x != targetX && current.y != targetY) {
+        // update current location from accelerometer
+    }
+
+    // motors.stop()
+}
+
 // Uses the side sonars to update the map
 // Assuming that the robot is on GROUND
 void mapCurrentLocation() {
