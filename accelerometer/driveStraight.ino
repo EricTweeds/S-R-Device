@@ -50,7 +50,7 @@ float kp = 0.1, ki = 0.05;
 float integral = 0.0;
 float error[20] = {0};
 int index = 0;
-float finalSP;
+float finalSP = 0.0;
 float currentAngle;
 float angleOffset = 500;
 bool setDt = false;
