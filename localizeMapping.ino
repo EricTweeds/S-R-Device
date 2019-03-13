@@ -9,7 +9,7 @@
 struct Direction {
     bool isFacingX;
     bool isForward;
-}
+};
 
 struct Position {
     int x;
@@ -95,8 +95,14 @@ void driveToLocation(int targetX, int targetY) {
     // motors.driveForward()
 
     // Drive until inline with target location
-    while (current.x != targetX && current.y != targetY) {
-        // update current location from accelerometer
+    if (current.direction.isFacingX) {
+        while (current.x != targetX) {
+            // update current location from accelerometer
+        }
+    } else {
+        while (current.y != targetY) {
+            // update current location from accelerometer
+        }
     }
 
     // motors.stop()
