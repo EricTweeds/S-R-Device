@@ -5,7 +5,7 @@
 #define S1 4
 #define S2 5
 #define S3 6
-#define lights 7
+#define CSLights 7
 #define sensorOut 2
 
 struct RGB {
@@ -112,10 +112,10 @@ RGB SensorLib::getColour() {
 }
 
 void SensorLib::setCSLights(bool on) {
-  pinMode(lights, OUTPUT);
+  pinMode(CSLights, OUTPUT);
   if (on) {
-    digitalWrite(lights, HIGH);
+    digitalWrite(CSLights, HIGH);
   } else {
-    digitalWrite(lights, LOW);
+    digitalWrite(CSLights, LOW);
   }
 }
