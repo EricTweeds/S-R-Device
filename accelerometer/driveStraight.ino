@@ -188,6 +188,11 @@ void loop()
   float angle;
   while (!getAngle(angle)) {}
   currentAngle = angle - angleOffset;
+  if (currentAngle > 180) {
+      currentAngle -= 360;
+  } else if (currentAngle < -180) {
+      currentAngle += 360;
+  }
 }
 
 void dmpDataReady()
