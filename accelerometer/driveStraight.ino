@@ -245,7 +245,7 @@ bool getAngle(float &angle)
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetEuler(euler, &q);
 
-    angle = euler[1] * 180 / M_PI;
+    angle = euler[0] * 180 / M_PI;
     return true;
   }
 }
