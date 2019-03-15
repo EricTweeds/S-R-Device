@@ -9,6 +9,17 @@ MapManagerLib::MapManagerLib() {
     }
 }
 
+void printMap() {
+    for (int i = 0; i < size; i++) {
+        Serial.print("| ")
+        for (int j = 0; j < size; j++){
+            Serial.print(MAP[i][j]);
+            Serial.print(" ");
+        }
+        Serial.println("|");
+    }
+}
+
 void MapManagerLib::setMapValue(int x, int y, char value) {
     // assuming value is an acceptable char value
     // assuming that x and y are less than 6

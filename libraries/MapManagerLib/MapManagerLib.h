@@ -23,6 +23,7 @@ class MapManagerLib
         const char ROCK = 'R';
         const char CANDLE = 'C';
 
+        void printMap();
         void setMapValue(int x, int y, char value);
         char getMapValue(int x, int y);
         bool getLocation(int &x, int &y, char value);
