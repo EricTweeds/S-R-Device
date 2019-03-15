@@ -30,7 +30,7 @@ float SonarLib::getDistance() {
     return distance;
 }
 
-float getAverageDistance(int numSamples) {
+float SonarLib::getAverageDistance(int numSamples) {
     float sum = 0;
     for (int i = 0; i < numSamples; i++) {
         sum += getDistance();
