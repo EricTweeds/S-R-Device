@@ -10,6 +10,7 @@
 #endif
 
 #include "SonarLib.h"
+#include "MotorLib.h"
 
 MPU6050 mpu;
 
@@ -33,6 +34,10 @@ MPU6050 mpu;
 #define Right2 4
 #define Left1 6
 #define Left2 7
+
+Motor leftMotor = {ENA, Left1, Left2};
+Motor rightMotor = {ENB, Right1, Right2};
+MotorLib motors = MotorLib(rightMotor, leftMotor);
 
 #define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
 
@@ -58,7 +63,6 @@ float error[20] = {0};
 int index = 0;
 float finalSP = 0;
 float currentAngle = 0;
-float angleOffset = 500;
 bool setDt = false;
 bool done = false;
 float startTime;
@@ -84,13 +88,8 @@ void driveDistance(float distance, SonarLib sonar)
     while (!getAngle(startingAngle))
     {
     }
-    // Set motors to go straight
-    analogWrite(ENA, 255);
-    analogWrite(ENB, 255);
-    digitalWrite(Left1, LOW);
-    digitalWrite(Left2, HIGH);
-    digitalWrite(Right1, HIGH);
-    digitalWrite(Right2, LOW);
+
+    motors.driveForward();
 
     while (startingDis - sonar.getDistance() < distance)
     {
@@ -105,18 +104,15 @@ void driveDistance(float distance, SonarLib sonar)
         float ratio = output * 2;
         if (ratio > 0)
         {
-            analogWrite(ENA, 255 / ratio);
-            analogWrite(ENB, 255);
+            motors.updateSpeeds(255 / ratio, 255);
         }
         else if (ratio < 0)
         {
-            analogWrite(ENA, 255);
-            analogWrite(ENB, 255 / (-1 * ratio));
+            motors.updateSpeeds(255, 255 / (-1 * ratio));
         }
         else
         {
-            analogWrite(ENA, 255);
-            analogWrite(ENB, 255);
+            motors.updateSpeeds(255, 255);
         }
 
         float angle;
@@ -133,15 +129,15 @@ void driveDistance(float distance, SonarLib sonar)
             currAngle += 360;
         }
     }
-    analogWrite(ENA, 0);
-    analogWrite(ENB, 0);
+    motors.updateSpeeds(0, 0);
 }
 
 void turnController(float setP)
 {
     bool turned = false;
-    float currAngle;
-    while (!getAngle(currAngle))
+    float currAngle = 0;
+    float startingAngle;
+    while (!getAngle(startingAngle))
     {
     }
     while (!turned)
@@ -159,57 +155,39 @@ void turnController(float setP)
         if (abs(output) < 0.02)
         {
             turned = true;
-            analogWrite(ENA, 0);
-            analogWrite(ENB, 0);
+            motors.updateSpeeds(0, 0);
         }
         if (output > 1)
         {
-            analogWrite(ENA, 255);
-            analogWrite(ENB, 255);
-            digitalWrite(Left1, LOW);
-            digitalWrite(Left2, HIGH);
-            digitalWrite(Right1, LOW);
-            digitalWrite(Right2, HIGH);
+            motors.updateSpeeds(255, 255);
+            motors.setDirectionRight();
         }
         else if (output < -1)
         {
-            analogWrite(ENA, 255);
-            analogWrite(ENB, 255);
-            digitalWrite(Left1, HIGH);
-            digitalWrite(Left2, LOW);
-            digitalWrite(Right1, HIGH);
-            digitalWrite(Right2, LOW);
+            motors.updateSpeeds(255, 255);
+            motors.setDirectionLeft();
         }
         else if (ratio > 0)
         {
-            analogWrite(ENA, 255 / ratio);
-            analogWrite(ENB, 255);
-            digitalWrite(Left1, LOW);
-            digitalWrite(Left2, HIGH);
-            digitalWrite(Right1, LOW);
-            digitalWrite(Right2, HIGH);
+            motors.updateSpeeds(255 / ratio, 255);
+            motors.setDirectionRight();
         }
         else if (ratio < 0)
         {
-            analogWrite(ENA, 255);
-            analogWrite(ENB, 255 / (-1 * ratio));
-            digitalWrite(Left1, HIGH);
-            digitalWrite(Left2, LOW);
-            digitalWrite(Right1, HIGH);
-            digitalWrite(Right2, LOW);
+            motors.updateSpeeds(255, 255 / (-1 * ratio));
+            motors.setDirectionLeft();
         }
         else
         {
             turned = true;
-            analogWrite(ENA, 0);
-            analogWrite(ENB, 0);
+            motors.updateSpeeds(0, 0);
         }
 
         float angle;
         while (!getAngle(angle))
         {
         }
-        currAngle = angle - angleOffset;
+        currAngle = angle - startingAngle;
         if (currAngle > 180)
         {
             currAngle -= 360;
@@ -219,8 +197,7 @@ void turnController(float setP)
             currAngle += 360;
         }
     }
-    analogWrite(ENA, 0);
-    analogWrite(ENB, 0);
+    motors.updateSpeeds(0, 0);
 }
 
 float getDistanceFromFlame(int heatValue)
@@ -283,21 +260,13 @@ void setup()
 {
     Serial.begin(9600);
 
-    pinMode(ENA, OUTPUT);
-    pinMode(ENB, OUTPUT);
-
-    pinMode(Right1, OUTPUT);
-    pinMode(Right2, OUTPUT);
-    pinMode(Left1, OUTPUT);
-    pinMode(Left2, OUTPUT);
-
-// join I2C bus (I2Cdev library doesn't do this automatically)
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    Wire.begin();
-    Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
-#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-    Fastwire::setup(400, true);
-#endif
+    // join I2C bus (I2Cdev library doesn't do this automatically)
+    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+        Wire.begin();
+        Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
+    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+        Fastwire::setup(400, true);
+    #endif
 
     // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3V or Arduino
     // Pro Mini running at 3.3V, cannot handle this baud rate reliably due to
@@ -367,13 +336,6 @@ void setup()
         }
         Serial.println("LOOPING");
     }
-    delay(500);
-    while (!getAngle(angleOffset))
-    {
-    }
-    currentAngle = angleOffset;
-    Serial.print("Angle Offset: ");
-    Serial.println(angleOffset);
     delay(1000);
 }
 
@@ -393,7 +355,7 @@ void loop()
     {
     }
 
-    turnLeft(ENA, ENB, Right1, Right2, Left1, Left2);
+    motors.turnLeft();
     int heatValue;
     while (!done)
     {
@@ -410,7 +372,7 @@ void loop()
         {
             if (!switchedDir)
             {
-                turnRight(ENA, ENB, Right1, Right2, Left1, Left2);
+                motors.turnRight();
                 switchedDir = true;
             }
             else
@@ -485,34 +447,4 @@ void loop()
     while (true)
     {
     }
-}
-
-void turnLeft(int enA, int enB, int right1, int right2, int left1, int left2)
-{
-    /*
-  * Turn left by turning the left wheel backwards
-  */
-
-    analogWrite(enA, 100);
-    analogWrite(enB, 100);
-
-    digitalWrite(left1, HIGH);
-    digitalWrite(left2, LOW);
-    digitalWrite(right1, HIGH);
-    digitalWrite(right2, LOW);
-}
-
-void turnRight(int enA, int enB, int right1, int right2, int left1, int left2)
-{
-    /*
-  * Turn left by turning the left wheel backwards
-  */
-
-    analogWrite(enA, 100);
-    analogWrite(enB, 100);
-
-    digitalWrite(left1, LOW);
-    digitalWrite(left2, HIGH);
-    digitalWrite(right1, LOW);
-    digitalWrite(right2, HIGH);
 }
