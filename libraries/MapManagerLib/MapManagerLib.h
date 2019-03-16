@@ -16,9 +16,9 @@ class MapManagerLib
         const char UNKNOWN = '?';
         const char WATER = 'W';
         const char GROUND = 'G';
-        const char PROPABLY_GROUND = 'PG';
+        const char PROPABLY_GROUND = 'B';
         const char PERSON = 'P';
-        const char GROUP = 'GP';
+        const char GROUP = 'A';
         const char FINISH = 'F';
         const char SAND = 'S';
         const char ROCK = 'R';
