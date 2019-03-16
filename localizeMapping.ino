@@ -315,8 +315,8 @@ void mapCurrentLocation() {
     mapManager.setMapValue(current.x, current.y, mapManager.GROUND);
 
     // Get distances from sonars
-    float rightDistance = rightSonar.getDistance();
-    float leftDistance = leftSonar.getDistance();
+    float rightDistance = rightSonar.getAverageDistance(5);
+    float leftDistance = leftSonar.getAverageDistance(5);
 
     // Find number of squares before something has been detected
     // This is assuming the given distance from sonar reaches the end
