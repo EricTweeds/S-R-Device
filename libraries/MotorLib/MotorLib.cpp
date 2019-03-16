@@ -14,6 +14,25 @@ MotorLib::MotorLib(Motor right, Motor left) {
     pinMode(rightMotor.outPin2, OUTPUT);
 }
 
+void MotorLib::updateSpeeds(int leftSpeed, int rightSpeed) {
+    analogWrite(leftMotor.enablePin, leftSpeed);
+    analogWrite(rightMotor.enablePin, rightSpeed);
+}
+
+void MotorLib::setDirectionLeft() {
+    digitalWrite(rightMotor.outPin1, HIGH);
+    digitalWrite(rightMotor.outPin2, LOW);
+    digitalWrite(leftMotor.outPin1, HIGH);
+    digitalWrite(leftMotor.outPin2, LOW);
+}
+
+void MotorLib::setDirectionRight() {
+    digitalWrite(rightMotor.outPin1, LOW);
+    digitalWrite(rightMotor.outPin2, HIGH);
+    digitalWrite(leftMotor.outPin1, LOW);
+    digitalWrite(leftMotor.outPin2, HIGH);
+}
+
 void MotorLib::driveForward() {
     analogWrite(leftMotor.enablePin, 255);
     analogWrite(rightMotor.enablePin, 255);
@@ -34,17 +53,7 @@ void MotorLib::driveBackwards() {
     digitalWrite(leftMotor.outPin2, LOW);
 }
 
-void MotorLib::turn90Left() {
-    analogWrite(leftMotor.enablePin, 255);
-    analogWrite(rightMotor.enablePin, 255);
-
-    digitalWrite(rightMotor.outPin1, LOW);
-    digitalWrite(rightMotor.outPin2, HIGH);
-    digitalWrite(leftMotor.outPin1, LOW);
-    digitalWrite(leftMotor.outPin2, HIGH);
-}
-
-void MotorLib::turn90Right() {
+void MotorLib::turnLeft() {
     analogWrite(leftMotor.enablePin, 255);
     analogWrite(rightMotor.enablePin, 255);
 
@@ -52,4 +61,14 @@ void MotorLib::turn90Right() {
     digitalWrite(rightMotor.outPin2, LOW);
     digitalWrite(leftMotor.outPin1, HIGH);
     digitalWrite(leftMotor.outPin2, LOW);
+}
+
+void MotorLib::turnRight() {
+    analogWrite(leftMotor.enablePin, 255);
+    analogWrite(rightMotor.enablePin, 255);
+
+    digitalWrite(rightMotor.outPin1, LOW);
+    digitalWrite(rightMotor.outPin2, HIGH);
+    digitalWrite(leftMotor.outPin1, LOW);
+    digitalWrite(leftMotor.outPin2, HIGH);
 }

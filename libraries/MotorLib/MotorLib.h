@@ -7,7 +7,7 @@ struct Motor {
     int enablePin;
     int outPin1;
     int outPin2;
-}
+};
 
 class MotorLib
 {
@@ -16,10 +16,13 @@ class MotorLib
         Motor rightMotor;
     public:
         MotorLib(Motor right, Motor left);
-        void driveForward ();
+        void updateSpeeds(int leftSpeed, int rightSpeed);
+        void setDirectionLeft();
+        void setDirectionRight();
+        void driveForward();
         void driveBackwards();
-        void turn90Left();
-        void turn90Right();
+        void turnLeft();
+        void turnRight();
 }; 
 
 #endif
