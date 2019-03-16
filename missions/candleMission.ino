@@ -440,7 +440,27 @@ void loop()
     analogWrite(ENB, 0);
     delay(2000);
 
-    turnController(startingAngle - minHeatAngle);
+    float offsetAngle = startingAngle - minHeatAngle;
+    if (offsetAngle > 180)
+    {
+        offsetAngle -= 360;
+    }
+    else if (offsetAngle < -180)
+    {
+        offsetAngle += 360;
+    }
+
+    // If offsetAngle is > 0 then candle is to the left of the robot
+    // If offsetAngle is < 0 then candle is to the right of the robot
+    int angleToTurn;
+    if (offsetAngle > 0) {
+        angleToTurn = -90;
+    }
+    else {
+        angleToTurn = 90;
+    }
+
+    turnController(offsetAngle);
     analogWrite(ENA, 0);
     analogWrite(ENB, 0);
     Serial.println("Turned back");
@@ -452,7 +472,7 @@ void loop()
     Serial.println(ySquares);
     delay(3000);
 
-    turnController(-90);
+    turnController(angleToTurn);
     Serial.println("Turned -90s");
     delay(4000);
 
