@@ -186,12 +186,12 @@ void loop() {
     // y = 0;
     // driveToLocation(x, y);
 
-    current.x = 0;
-    current.y = 0;
+    current.x = 2;
+    current.y = 2;
     current.direction.isForward = true;
     current.direction.isFacingX = false;
-    x = 1;
-    y = 0;
+    x = 3;
+    y = 1;
     driveToLocation(x, y);
 
     Serial.println("Arrived");
@@ -217,10 +217,11 @@ void driveToLocation(int targetX, int targetY) {
             turnController(180);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
+            int directionCompensator = (current.direction.isForward) ? 1 : -1;
             if (current.y > targetY) {
-                turnController(-90);
-            } else {
-                turnController(90);
+                turnController(90.0 * directionCompensator);
+            } else if (current.y < targetY) {
+                turnController(-90.0 * directionCompensator);
                 current.direction.isForward = !current.direction.isForward;
             }
             current.direction.isFacingX = !current.direction.isFacingX;
@@ -232,11 +233,12 @@ void driveToLocation(int targetX, int targetY) {
             turnController(180);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
+            int directionCompensator = (current.direction.isForward) ? 1 : -1;
             if (current.x > targetX) {
-                turnController(-90);
+                turnController(-90.0 * directionCompensator);
                 current.direction.isForward = !current.direction.isForward;
-            } else {
-                turnController(90);
+            } else if (current.x < targetX) {
+                turnController(90.0 * directionCompensator);
             }
             current.direction.isFacingX = !current.direction.isFacingX;
         }
@@ -262,22 +264,23 @@ void driveToLocation(int targetX, int targetY) {
     Serial.println("Drove");
     delay(2000);
 
+    int directionCompensator = (current.direction.isForward) ? 1 : -1;
     if (current.direction.isFacingX) {
         if (current.y > targetY) {
-            turnController(-90);
+            turnController(90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
         } else if (current.y < targetY) {
-            turnController(90);
+            turnController(-90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
             current.direction.isForward = !current.direction.isForward;
         }
     } else {
         if (current.x > targetX) {
-            turnController(-90);
+            turnController(-90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
             current.direction.isForward = !current.direction.isForward;
         } else if (current.x < targetX) {
-            turnController(90);
+            turnController(90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
         }
     }
