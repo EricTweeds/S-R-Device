@@ -15,6 +15,10 @@ void MapManagerLib::setMapValue(int x, int y, char value) {
     if (x >= size || x < 0 || y >= size || y < 0) {
         return;
     }
+    // Only update unknown squares
+    if (MAP[x][y] != UNKNOWN && MAP[x][y] != PROPABLY_GROUND) {
+        return;
+    }
     MAP[x][y] = value;
 }
 
