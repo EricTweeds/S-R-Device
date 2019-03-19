@@ -207,6 +207,98 @@ void loop() {
     while (true) {}
 }
 
+void generalFunc() {
+    MapManagerLib.setMapValue(current.x, current.y, MapManagerLib.FINISH);
+    bool putOutCandle = false, foundFood = false, foundGroup = false, foundSolo = false, fedPeople = false;
+
+    float frontDistance = frontSonar.getAverageDistance(5);
+    if (frontDistance / squareDistance > 5.5) {
+        for (int i = 0; i < 5; i++) {
+            driveDistance(squareDistance, frontSonar);
+            mapCurrentLocation();
+        }
+        turnController(180);
+        driveDistance(squareDistance * 2, frontSonar);
+        turnController(180);
+    } else {
+        // Drive to middle of area
+        for (int i = 0; i < 3; i++) {
+            driveDistance(squareDistance, frontSonar);
+            mapCurrentLocation();
+        }
+    }
+
+    int x, y;
+    if (searchForCandle(x, y)) {
+        driveToLocation(x, y);
+    }
+
+    while (!(putOutCandle && foundFood && foundGroup && foundSolo && fedPeople)) {
+
+    }
+
+    if (!MapManagerLib.getLocation(x, y, MapManagerLib.FINISH)) {
+        // Uhoo not sure how this would happen
+    }
+    driveToLocation(x, y);
+}
+
+bool driveAndLookForFood() {
+    // while (distanceTravelled < 30)
+        // drive straigh slowly motors.driveForward();
+        // motors.updateSpeeds(100, 100);
+        // poll for magnet
+        // if (foundMagnet) foundMagnet = true;
+    // return foundMagnet
+}
+
+void driveAroundObject() {
+    float frontDistance = frontSonar.getAverageDistance(5);
+    float leftDistance = leftSonar.getAverageDistance(5);
+    float rightDistance = rightSonar.getAverageDistance(5);
+    float turnAngle;
+    if (leftDistance > rightDistance) {
+        // turn left
+        turnAngle = -90.0;
+        turnController(turnAngle);
+    } else {
+        // turn right
+        turnAngle = 90.0;
+        turnController(turnAngle);
+    }
+    driveDistance(squareDistance, frontSonar);
+    turnController(-1.0 * turnAngle);
+    driveDistance(floor(frontDistance / squareDistance) + 1, frontSonar);
+    turnController(-1.0 * turnAngle);
+    driveDistance(squareDistance, frontSonar);
+    turnController(turnAngle);
+}
+
+void driveAndMap() {
+    mapCurrentLocation();
+
+    char groundInFront = SensorLib.getGroundInFront();
+    switch (groundInFront) {
+        case MapManagerLib.GROUND:
+            driveDistance(squareDistance, frontSonar);
+            break;
+        case MapManagerLib.SAND:
+            driveAndLookForFood();
+            break;
+        case MapManagerLib.WATER:
+            driveAroundObject();
+            break;
+        // case MapManagerLib.:
+
+        // case MapManagerLib.:
+
+        // case MapManagerLib.:
+
+        default:
+
+    }
+}
+
 // Drives robot to given location
 // Perhaps this function should go into the motor lib
 void driveToLocation(int targetX, int targetY) {
