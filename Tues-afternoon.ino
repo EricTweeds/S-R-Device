@@ -76,25 +76,7 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 Quaternion q;   // [w, x, y, z]         quaternion container
 float euler[3]; // [psi, theta, phi]    Euler angle container
 
-//SensorLib sensorLib;
-
-float dt = 0.01;
-float kp = 0.1, ki = 0.05, kd = 0.01;
-float integral = 0.0;
-float lastError = 0.0;
-float error[20] = {0};
-int index = 0;
-float finalSP = 0;
-float currentAngle = 0;
-bool setDt = false;
-bool done = false;
-float startTime;
-
 volatile bool mpuInterrupt = false; // indicates whether MPU interrupt pin has gone high
-int numSamples = 50;
-int prevHeatValue = 9999;
-float minHeatAngle = 0;
-bool switchedDir = false;
 
 SonarLib frontSonar = SonarLib(trigF, echoF);
 SonarLib rightSonar = SonarLib(trigR, echoR);
@@ -108,6 +90,13 @@ void dmpDataReady()
 
 void driveDistance(float distance)
 {
+    float dt = 0.01;
+    float kp = 0.1, ki = 0.05, kd = 0.01;
+    float integral = 0.0;
+    float lastError = 0.0;
+    float error[20] = {0};
+    int index = 0;
+
     float frontStartingDis = frontSonar.getAverageDistance(5);
     float rearStartingDis = rearSonar.getAverageDistance(5);
     float currAngle = 0.0;
@@ -121,12 +110,19 @@ void driveDistance(float distance)
     Serial.println(frontStartingDis);
     float currentDistance = rearSonar.getAverageDistance(5);
     float prevDistance = currentDistance;
+    int numSquaresTraversed = 0;
     // while (currentDistance > frontStartingDis) {
     //   frontStartingDis = frontSonar.getAverageDistance(5);
     //   currentDistance = frontSonar.getAverageDistance(5);
     // }
     while (currentDistance - rearStartingDis < distance)
     {
+        if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
+            motors.updateSpeeds(0, 0);
+            delay(20);
+            mapCurrentLocation();
+            numSquaresTraversed++;
+        }
         // Serial.println(currentDistance);
         integral -= error[index] * dt;
         error[index] = currAngle;
@@ -175,6 +171,13 @@ void driveDistance(float distance)
 
 void turnController(float setP)
 {
+    float dt = 0.01;
+    float kp = 0.1, ki = 0.05, kd = 0.01;
+    float integral = 0.0;
+    float lastError = 0.0;
+    float error[20] = {0};
+    int index = 0;
+
     bool turned = false;
     float currAngle = 0;
     float startingAngle;
@@ -387,7 +390,10 @@ void loop()
         return;
     }
     // driveToLocation(2,3);
-    driveAvoidingObstacles(2, 1);
+    // driveAvoidingObstacles(2, 1);
+
+    driveDistance(90);
+
     // mapManager.printMap();
     // for (int i = 0; i < 2; i++) {
     //     mapCurrentLocation();
@@ -534,7 +540,7 @@ void driveToLocation(int targetX, int targetY) {
         if (current.y > targetY) {
             turnController(-90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
-            current.direction.isForward = !current.direction.isForward; 
+            current.direction.isForward = !current.direction.isForward;
         } else if (current.y < targetY) {
             turnController(90.0 * directionCompensator);
             current.direction.isFacingX = !current.direction.isFacingX;
