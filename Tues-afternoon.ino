@@ -117,6 +117,7 @@ void driveDistance(float distance)
     // }
     while (currentDistance - rearStartingDis < distance)
     {
+        // Map location every square
         if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
             motors.updateSpeeds(0, 0);
             delay(20);
