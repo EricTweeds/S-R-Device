@@ -17,9 +17,7 @@ MapManagerLib mapManager;
 
 MPU6050 mpu;
 
-#define flameSensorPin A0
-#define fanPin 53
-#define ledPin 30
+#define buttonPin 53
 
 // Front
 #define echoF 24
@@ -297,7 +295,7 @@ bool getAngle(float &angle)
 
 void setup()
 {
-    pinMode(53, INPUT);
+    pinMode(buttonPin, INPUT);
     Serial.begin(9600);
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -378,8 +376,8 @@ void setup()
     }
     Serial.println("DONE");
     delay(1000);
-    while(digitalRead(53) != HIGH) {
-      Serial.println(digitalRead(53));
+    while(digitalRead(buttonPin) != HIGH) {
+      Serial.println(digitalRead(buttonPin));
     }
 }
 
