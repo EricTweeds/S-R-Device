@@ -14,10 +14,10 @@
 #define CANDLE 'C'
 
 struct RGB {
-  int R;
-  int G;
-  int B;
-  int C;
+  float R;
+  float G;
+  float B;
+  float C;
   float sum;
 };
 
@@ -35,11 +35,22 @@ void setup() {
 
 void loop() {
   RGB colour = getColour();
-  logColourRatios(colour);
+  //logColourVal(colour);
+  char object = determineObject(colour);
+  Serial.println(object);
+  delay(500);
 }
 
 char determineObject(RGB colour) {
-  
+  Serial.println(colour.B);
+  Serial.println(colour.G);
+  if (colour.B > 39 && colour.G < 33) {
+    return PERSON;
+  } else if (colour.B < 37 && colour.G > 35) {
+    return GROUP;
+  } else {
+    return UNKNOWN;
+  }
 }
 
 void logColourVal(RGB colour) {
@@ -96,9 +107,15 @@ RGB getColour() {
   digitalWrite(S2, HIGH);
   digitalWrite(S3, LOW);
   int c = pulseIn(sensorOut, LOW);
-  colour.C = c;
-  int sum = (red + blue + c + green);
-  colour.sum = sum*1.0;
+  
+  float sum = (red + blue + c + green)*1.0;
+
+  colour.R = red/sum*100;
+  colour.G = green/sum*100;
+  colour.B = blue/sum*100;
+  colour.C = c/sum*100;
+  
+  colour.sum = sum;
   return colour;
 }
 

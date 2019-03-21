@@ -24,26 +24,57 @@ void SensorLib::logColourVal(RGB colour) {
   Serial.println(colour.B);
 }
 
-RGB SensorLib::getColour() {
+RGB SensorLib::_getColour() {
   RGB colour;
   //red
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
-  colour.R = pulseIn(sensorOut, LOW);
+  int red = pulseIn(sensorOut, LOW);
+  colour.R = red;
+
+  delay(100);
 
   //Green
   digitalWrite(S2,HIGH);
   digitalWrite(S3,HIGH);
   // Reading the output frequency
-  colour.G = pulseIn(sensorOut, LOW);
+  int green = pulseIn(sensorOut, LOW);
+  colour.G = green;
+  delay(100);
 
   //Blue
   digitalWrite(S2,LOW);
   digitalWrite(S3,HIGH);
   // Reading the output frequency
-  colour.B = pulseIn(sensorOut, LOW);
+  int blue = pulseIn(sensorOut, LOW);
+  colour.B = blue;
+  delay(100);
 
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, LOW);
+  int c = pulseIn(sensorOut, LOW);
+  
+  float sum = (red + blue + c + green)*1.0;
+
+  colour.R = red/sum*100;
+  colour.G = green/sum*100;
+  colour.B = blue/sum*100;
+  colour.C = c/sum*100;
+  
+  colour.sum = sum;
   return colour;
+}
+
+char SensorLib::determineObject() {
+  //call when close to object (~2.5-3in) returns what it is
+  RGB colour = _getColour();
+  if (colour.B > 39 && colour.G < 33) {
+    return PERSON;
+  } else if (colour.B < 37 && colour.G > 35) {
+    return GROUP;
+  } else {
+    return UNKNOWN;
+  }
 }
 
 void SensorLib::setCSLights(bool on) {
@@ -74,9 +105,9 @@ void SensorLib::setRGBColour(int colour) {
 }
 
 void SensorLib::_setColour(bool r, bool g, bool b) {
-  int redPin = 7;
-  int greenPin = 5;
-  int bluePin = 6;
+  int redPin = 43;
+  int greenPin = 42;
+  int bluePin = 40;
 
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
