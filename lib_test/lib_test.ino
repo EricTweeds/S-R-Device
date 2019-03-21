@@ -3,13 +3,14 @@
 SensorLib sensorLib;
 
 void setup() {
-  // put your setup code here, to run once:
-
+  Serial.begin(9600);
+  sensorLib.InitializeMagnetSensor();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  sensorLib.toggleLED(2);
+  if(sensorLib.IsMagnet()) {
+    Serial.println("detected");  
+  }
   delay(1000);
 
 }

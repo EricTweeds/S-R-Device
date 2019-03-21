@@ -1,5 +1,8 @@
 #include "Arduino.h"
 #include "SensorLib.h"
+#include "MPU9250.h"
+
+MPU9250 IMU(Wire,0x69);
 
 SensorLib::SensorLib() {
     //constructor
@@ -130,4 +133,47 @@ void SensorLib::_setColour(bool r, bool g, bool b) {
   } else {
     digitalWrite(bluePin, HIGH);
   } 
+}
+
+int SensorLib::InitializeMagnetSensor() {
+  int magnetSensorStatus;
+  // start communication with IMU 
+  magnetSensorStatus = IMU.begin();
+  if (magnetSensorStatus < 0) 
+    {return -1;}
+
+  // get the ambient field
+  ambientMagneticField = 0;
+  ambientMagneticField = _GetMagneticMagnitude();
+  return 1;
+}
+
+int SensorLib::_GetMagneticMagnitude() {
+  // read the sensor
+  IMU.readSensor();
+
+  // Turns the magnetic field vector into a magnitude
+  return _VectorMagnitude(IMU.getMagX_uT(), IMU.getMagY_uT(), IMU.getMagZ_uT());
+}
+
+int SensorLib::_GetAdjustedMagneticMagnitude() {
+
+  // read the sensor
+  IMU.readSensor();
+
+  // Turns the magnetic field vector into a magnitude
+  return _VectorMagnitude(IMU.getMagX_uT(), IMU.getMagY_uT(), IMU.getMagZ_uT()) - ambientMagneticField;
+}
+
+bool SensorLib::IsMagnet(){
+  int magnitude = _GetAdjustedMagneticMagnitude();
+
+  if(magnitude - MAGNETTHRESHOLD > 0){
+    return true;
+  }
+  return false;
+}
+
+float SensorLib::_VectorMagnitude(float a, float b, float c){
+  return sqrt(pow(a,2) + pow(b,2) + pow(c,2));
 }
