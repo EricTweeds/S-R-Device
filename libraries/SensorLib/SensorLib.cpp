@@ -57,7 +57,7 @@ void SensorLib::setCSLights(bool on) {
 
 void SensorLib::setRGBColour(int colour) {
   if(colour == 0) { //off
-    _setColour(true, true, true);
+    _setColour(false, false, false);
   } else if (colour == 1) { //red
     _setColour(true, false, false);
   } else if (colour == 2) { //green
