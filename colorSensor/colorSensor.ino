@@ -1,14 +1,14 @@
-#define S0 3
-#define S1 4
-#define S2 5
-#define S3 6
-#define CSLights 7
-#define sensorOut 2
+#define S0 50
+#define S1 52
+#define S2 53
+#define S3 51
+#define CSLights 49
+#define sensorOut 12
 
 #define UNKNOWN '?'
 #define WATER 'W'
 #define PERSON 'P'
-#define GROUP 'GP'
+#define GROUP 'A'
 #define SAND 'S'
 #define ROCK 'R'
 #define CANDLE 'C'
@@ -18,6 +18,7 @@ struct RGB {
   int G;
   int B;
   int C;
+  float sum;
 };
 
 void setup() {
@@ -34,7 +35,7 @@ void setup() {
 
 void loop() {
   RGB colour = getColour();
-  logColourVal(colour);
+  logColourRatios(colour);
 }
 
 char determineObject(RGB colour) {
@@ -53,13 +54,26 @@ void logColourVal(RGB colour) {
   Serial.println();
 }
 
+void logColourRatios(RGB colour) {
+  Serial.print((colour.B/colour.sum)*100);
+  Serial.print(" ");
+  Serial.print((colour.R/colour.sum)*100);
+  Serial.print(" ");
+  Serial.print((colour.G/colour.sum)*100);
+  Serial.print(" ");
+  Serial.print((colour.C/colour.sum)*100);
+  Serial.print(" ");
+  Serial.println();
+}
+
 RGB getColour() {
   
   RGB colour;
   //red
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
-  colour.R = pulseIn(sensorOut, LOW);
+  int red = pulseIn(sensorOut, LOW);
+  colour.R = red;
 
   delay(100);
 
@@ -67,23 +81,24 @@ RGB getColour() {
   digitalWrite(S2,HIGH);
   digitalWrite(S3,HIGH);
   // Reading the output frequency
-  colour.G = pulseIn(sensorOut, LOW);
-
+  int green = pulseIn(sensorOut, LOW);
+  colour.G = green;
   delay(100);
 
   //Blue
   digitalWrite(S2,LOW);
   digitalWrite(S3,HIGH);
   // Reading the output frequency
-  colour.B = pulseIn(sensorOut, LOW);
-
+  int blue = pulseIn(sensorOut, LOW);
+  colour.B = blue;
   delay(100);
 
   digitalWrite(S2, HIGH);
   digitalWrite(S3, LOW);
-  colour.C = pulseIn(sensorOut, LOW);
-
-
+  int c = pulseIn(sensorOut, LOW);
+  colour.C = c;
+  int sum = (red + blue + c + green);
+  colour.sum = sum*1.0;
   return colour;
 }
 
