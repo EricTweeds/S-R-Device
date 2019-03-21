@@ -95,6 +95,15 @@ void MapManagerLib::setVisited(int x, int y) {
     visited[x][y] = true;
 }
 
+bool MapManagerLib::getVisited(int x, int y) {
+    // assuming value is an acceptable char value
+    // assuming that x and y are less than 6
+    if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {
+        return false;
+    }
+    return visited[x][y];
+}
+
 char MapManagerLib::getMapValue(int x, int y) {
     // assuming that x and y values are less than size
     if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {

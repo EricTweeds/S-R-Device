@@ -9,6 +9,7 @@ class MapManagerLib
         MapManagerLib();
         
         // Const values
+        const char UNKNOWN = '?';
         const char OUTOFBOUNDS = 'O';
         const char PIT = 'W';
         const char GROUND = 'G';
@@ -26,6 +27,7 @@ class MapManagerLib
         bool findClosest(int &x, int &y, int currentX, int currentY, char value);
         bool findClosestNotVisited(int &x, int &y, int currentX, int currentY, char value);
         void setVisited(int x, int y);
+        bool getVisited(int x, int y);
         void printMap();
         void printVisited();
 
