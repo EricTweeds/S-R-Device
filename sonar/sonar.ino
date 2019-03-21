@@ -38,3 +38,29 @@ float getSonarDistance(int trigPin, int echoPin) {
 
   return distance;
 }
+
+// #include "SonarLib.h"
+
+// // Front
+// #define echoF 25
+// #define trigF 24
+// // Left
+// #define echoL 23
+// #define trigL 22
+// // Right
+// #define echoR 27
+// #define trigR 26
+
+// SonarLib s = SonarLib(trigF, echoF);
+
+// void setup()
+// {
+//   Serial.begin(9600);
+// }
+
+// void loop()
+// {
+//   float distance = s.getDistance();
+//   Serial.println(distance);
+//   delay(500);
+// }
