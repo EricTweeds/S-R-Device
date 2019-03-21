@@ -44,6 +44,12 @@ MapManagerLib::MapManagerLib() {
     MAP[5][3] = PIT;
     MAP[5][4] = GROUND;
     MAP[5][5] = GROUND;
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            visited[i][j] = false;
+        }
+    }
 }
 
 void MapManagerLib::printMap() {
@@ -51,6 +57,17 @@ void MapManagerLib::printMap() {
         Serial.print("| ");
         for (int j = 0; j < size; j++){
             Serial.print(MAP[j][i]);
+            Serial.print(" ");
+        }
+        Serial.println("|");
+    }
+}
+
+void MapManagerLib::printVisited() {
+    for (int i = 0; i < size; i++) {
+        Serial.print("| ");
+        for (int j = 0; j < size; j++){
+            Serial.print(visited[j][i]);
             Serial.print(" ");
         }
         Serial.println("|");
@@ -69,9 +86,55 @@ void MapManagerLib::setMapValue(int x, int y, char value) {
     MAP[x][y] = value;
 }
 
+void MapManagerLib::setVisited(int x, int y) {
+    // assuming value is an acceptable char value
+    // assuming that x and y are less than 6
+    if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {
+        return;
+    }
+    visited[x][y] = true;
+}
+
 char MapManagerLib::getMapValue(int x, int y) {
     // assuming that x and y values are less than size
+    if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {
+        return OUTOFBOUNDS;
+    }
     return MAP[x][y];
+}
+
+bool MapManagerLib::findClosest(int &x, int &y, int currentX, int currentY, char value) {
+    float minDistance = 100;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (MAP[i][j] == value) {
+                float distance = sqrt(pow(i - currentX, 2) + pow(j - currentY, 2));
+                if (distance < minDistance) {
+                    x = i;
+                    y = j;
+                    minDistance = distance;
+                }
+            }
+        }
+    }
+    return minDistance == 100;
+}
+
+bool MapManagerLib::findClosestNotVisited(int &x, int &y, int currentX, int currentY, char value) {
+    float minDistance = 100;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (MAP[i][j] == value && !visited[i][j]) {
+                float distance = sqrt(pow(i - currentX, 2) + pow(j - currentY, 2));
+                if (distance < minDistance) {
+                    x = i;
+                    y = j;
+                    minDistance = distance;
+                }
+            }
+        }
+    }
+    return minDistance == 100;
 }
 
 bool MapManagerLib::getLocation(int &x, int &y, char value) {
@@ -82,7 +145,7 @@ bool MapManagerLib::getLocation(int &x, int &y, char value) {
         for (int j = 0; j < size; j++) {
             if (MAP[i][j] == value) {
                 x = i;
-                j = y;
+                y = j;
                 return true;
             }
         }
