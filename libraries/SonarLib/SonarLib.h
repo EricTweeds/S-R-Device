@@ -10,7 +10,8 @@ class SonarLib
         int echoPin;
     public:
         SonarLib(int trig, int echo);
-        void getDistance();
+        float getDistance();
+        float getAverageDistance(int numSamples);
 }; 
 
 #endif

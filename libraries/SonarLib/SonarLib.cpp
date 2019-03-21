@@ -9,7 +9,7 @@ SonarLib::SonarLib(int trig, int echo) {
     pinMode(echoPin, INPUT);
 }
 
-void SonarLib::getDistance() {
+float SonarLib::getDistance() {
     /*
    * returns distance from given sonar to object in cm.
    * Called when distance for sonar is required.
@@ -28,4 +28,12 @@ void SonarLib::getDistance() {
   float distance = duration * 0.034 / 2;
 
   return distance;
+}
+
+float SonarLib::getAverageDistance(int numSamples) {
+    float sum = 0;
+    for (int i = 0; i < numSamples; i++) {
+        sum += getDistance();
+    }
+    return sum / numSamples;
 }
