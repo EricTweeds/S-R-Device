@@ -21,6 +21,7 @@
 #define GROUP 'A'
 
 #include "Arduino.h"
+#include "MPU9250.h"
 
 struct RGB {
   float R;
@@ -29,6 +30,8 @@ struct RGB {
   float C;
   float sum;
 };
+
+const int MAGNETTHRESHOLD = 100;
 
 class SensorLib
 {
@@ -41,6 +44,17 @@ class SensorLib
     void setCSLights(bool on);
     void setRGBColour(int colour);
     void _setColour(bool r, bool g, bool b);
+    int InitializeMagnetSensor();
+    int _GetMagneticMagnitude();
+    int _GetAdjustedMagneticMagnitude();
+    bool IsMagnet();
+    float _VectorMagnitude(float a, float b, float c);
+
+
+
+
+  private:
+    int ambientMagneticField;
 };
 
 #endif
