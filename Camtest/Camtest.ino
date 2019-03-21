@@ -25,7 +25,7 @@ Quaternion q;   // [w, x, y, z]         quaternion container
 float euler[3]; // [psi, theta, phi]    Euler angle container
 
 volatile bool mpuInterrupt = false; // indicates whether MPU interrupt pin has gone high
-bool lookingForHouses;
+bool lookingForHouses = true;
 
 #include "SonarLib.h"
 #include "MotorLib.h"
@@ -161,6 +161,7 @@ void driveDistance(float distance)
         frontSonar.getAverageDistance(sonarAverages) > 5
     )
     {
+        Serial.println("Driving");
         if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
             if (current.direction.isFacingX) {
                 if (current.direction.isForward) {
@@ -229,7 +230,7 @@ void driveDistance(float distance)
           int object = sensorLib.determineObject();
           Serial.println(object);
           if(object == PERSON || object == GROUP){
-            
+            Serial.println(object);
             motors.updateSpeeds(0, 0);
             if(object == PERSON){
               sensorLib.setRGBColour(YELLOW);
@@ -502,7 +503,8 @@ void loop()
 
     // mapArea();
     // driveDistance(60);
-    findHouses();
+    driveDistance(10);
+    // findHouses();
     while (true) {}
     // driveDistance(60);
     // while(true) {}
