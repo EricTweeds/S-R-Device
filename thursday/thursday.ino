@@ -157,7 +157,7 @@ void driveDistance(float distance)
     while (
         (currentDistance - rearStartingDis < distance || millis() - startTime < 5000 * totalNumSquares)
         &&
-        frontSonar.getAverageDistance(sonarAverages) > 5 //do we need this? does this interfere with driving towards walls? CB
+        frontSonar.getAverageDistance(sonarAverages) > 5 //do we need this? does this interfere with driving towards walls?
     )
     {
         if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
@@ -195,7 +195,7 @@ void driveDistance(float distance)
         float ratio = output * 2;
         if (ratio > 0) 
         {
-            motors.updateSpeeds(255 / (ratio + 1), 255); // what if ratio is between 0 and 1? it will try to increase the wheel speed? CB
+            motors.updateSpeeds(255 / (ratio + 1), 255); 
         }
         else if (ratio < 0)
         {
@@ -286,23 +286,23 @@ void turnController(float setP)
         }
         if (output > 1)
         {
+            motors.setDirectionRight();
             motors.updateSpeeds(255, 255);
-            motors.setDirectionRight(); //Should this be before updating the motor speeds? CB
         }
         else if (output < -1)
         {
-            motors.updateSpeeds(255, 255);
             motors.setDirectionLeft();
+            motors.updateSpeeds(255, 255);
         }
         else if (ratio > 0)
         {
-            motors.updateSpeeds(255 / (ratio + 1), 255);
             motors.setDirectionRight();
+            motors.updateSpeeds(255 / (ratio + 1), 255);
         }
         else if (ratio < 0)
         {
-            motors.updateSpeeds(255, 255 / abs(ratio - 1));
             motors.setDirectionLeft();
+            motors.updateSpeeds(255, 255 / abs(ratio - 1));
         }
         else
         {
