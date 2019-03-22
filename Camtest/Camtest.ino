@@ -60,6 +60,11 @@ MapManagerLib mapManager;
 #define Left1 6
 #define Left2 7
 
+struct HousesFound {
+    bool redHouseFound;
+    bool yellowHouseFound;
+};
+
 struct Direction {
     bool isFacingX;
     bool isForward;
@@ -81,8 +86,9 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0) searchhere
-Direction currentDir = { true, false };
-Position current = { 5, 2, currentDir };
+Direction currentDir = { false, true }; // {facingx, facingpositive}
+Position current = { 2, 0, currentDir };
+HousesFound houses = { false, false };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -97,7 +103,6 @@ void dmpDataReady()
 {
     mpuInterrupt = true;
 }
-
 void driveDistance(float distance)
 {
     if (distance < 1) {
@@ -119,7 +124,7 @@ void driveDistance(float distance)
     float currAngle = 0.0;
     float startingAngle;
     float sumAngles = 0;
-    int numSmaples = 20;
+    int numSamples = 20;
     
     float currentDistance = rearSonar.getAverageDistance(sonarAverages);
     float prevDistance = currentDistance;
@@ -144,11 +149,11 @@ void driveDistance(float distance)
         }
     } while (sumDistance > 165);
 
-    for (int i = 0; i < numSmaples; i++) {
+    for (int i = 0; i < numSamples; i++) {
         while (!getAngle(startingAngle)) {}
         sumAngles += startingAngle;
     }
-    startingAngle = sumAngles / numSmaples;
+    startingAngle = sumAngles / numSamples;
 
     Serial.print("Starting Distance: ");
     Serial.println(rearStartingDis);
@@ -158,7 +163,7 @@ void driveDistance(float distance)
     while (
         (currentDistance - rearStartingDis < distance || millis() - startTime < 5000 * totalNumSquares)
         &&
-        frontSonar.getAverageDistance(sonarAverages) > 5
+        frontSonar.getAverageDistance(sonarAverages) > 5 //do we need this? does this interfere with driving towards walls? CB
     )
     {
         if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
@@ -194,9 +199,9 @@ void driveDistance(float distance)
 
         // Arduino map func => (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         float ratio = output * 2;
-        if (ratio > 0)
+        if (ratio > 0) 
         {
-            motors.updateSpeeds(255 / ratio, 255);
+            motors.updateSpeeds(255 / ratio, 255); // what if ratio is between 0 and 1? it will try to increase the wheel speed? CB
         }
         else if (ratio < 0)
         {
@@ -223,24 +228,6 @@ void driveDistance(float distance)
             counter++;
         } while (abs(prevDistance - currentDistance) > 10 * counter);
         prevDistance = currentDistance;
-
-        if(lookingForHouses){
-          
-          int object = sensorLib.determineObject();
-          Serial.println(object);
-          if(object == PERSON || object == GROUP){
-            
-            motors.updateSpeeds(0, 0);
-            if(object == PERSON){
-              sensorLib.setRGBColour(YELLOW);
-            }
-            else{
-              sensorLib.setRGBColour(RED);
-            }
-            while(digitalRead(buttonPin) != HIGH) {}
-            motors.updateSpeeds(255, 255);
-          }
-        }
     }
     if (frontSonar.getAverageDistance(sonarAverages) > 5) {
         int numSquares = floor(distance / squareDistance);
@@ -265,6 +252,9 @@ void driveDistance(float distance)
 
 void turnController(float setP)
 {
+    Serial.print("Turning: ");
+    Serial.println(setP);
+
     float dt = 0.01;
     float kp = 0.1, ki = 0.05, kd = 0.01;
     float integral = 0.0;
@@ -274,10 +264,15 @@ void turnController(float setP)
 
     bool turned = false;
     float currAngle = 0;
+    int numSamples = 10;
+    float sumAngles = 0;
     float startingAngle;
-    while (!getAngle(startingAngle))
-    {
+    for (int i = 0; i < numSamples; i++) {
+        while (!getAngle(startingAngle)) {}
+        sumAngles += startingAngle;
     }
+    startingAngle = sumAngles / numSamples;
+
     while (!turned)
     {
         integral -= error[index] * dt;
@@ -298,7 +293,7 @@ void turnController(float setP)
         if (output > 1)
         {
             motors.updateSpeeds(255, 255);
-            motors.setDirectionRight();
+            motors.setDirectionRight(); //Should this be before updating the motor speeds? CB
         }
         else if (output < -1)
         {
@@ -518,15 +513,16 @@ void loop()
 }
 
 void findHouses() {
-  // currently there is no logic to set either bool to true
-  bool redHouseFound = false;
-  bool yellowHouseFound = false;
-  lookingForHouses = true;
-  
-  // Change this value depending on start location
-  int currentLocation = 1;
+  houses.redHouseFound = false;
+  houses.yellowHouseFound = false;
 
-  while(!redHouseFound || !yellowHouseFound){
+  int startingLocation = 2;
+  // Change this value depending on start location
+  initializeStartingLocation(startingLocation);
+
+  int currentLocation = startingLocation;
+  
+  while(!houses.yellowHouseFound || !houses.redHouseFound){
     houseSegment(currentLocation);
     currentLocation++;
     // loop if max value reached
@@ -534,20 +530,60 @@ void findHouses() {
   }
 }
 
+void initializeStartingLocation(int location){
+  if(location == 0){
+    currentDir = { false, false }; // {facingx, facingpositive}
+    current = { 3, 5, currentDir };
+  }
+  else if(location == 1){
+    currentDir = { true, false }; // {facingx, facingpositive}
+    current = { 5, 2, currentDir };
+  }
+  else if(location == 2){
+    currentDir = { false, true }; // {facingx, facingpositive}
+    current = { 2, 0, currentDir };
+  }
+  else if(location == 3){
+    currentDir = { true, true }; // {facingx, facingpositive}
+    current = { 0, 3, currentDir };
+  }
+  else if(location == 4){
+    currentDir = { false, false }; // {facingx, facingpositive}
+    current = { 3, 5, currentDir };
+  }
+}
+
 void houseSegment(int location){
+  if(location == 4){
+    driveAvoidingObstacles(4,3);
+  }
+  
+  
   if(location == 0){
       driveAvoidingObstacles(5,5);
       turnController(-90);
-      current.direction.isFacingX = !current.direction.isFacingX;
+      motors.driveForward();
+      delay(500);
+      motors.updateSpeeds(0,0);
+      delay(500);
+      motors.driveBackwards();
+      delay(500);
+      current.direction.isFacingX = false;
       current.direction.isForward = false;
-      driveAvoidingObstacles(3,5);
+      //driveAvoidingObstacles(3,5);
       driveAvoidingObstacles(4,3);
       driveAvoidingObstacles(5,2);
   }
   else if(location == 1){
       driveAvoidingObstacles(5,0);
       turnController(-90);
-      current.direction.isFacingX = !current.direction.isFacingX;
+      motors.driveForward();
+      delay(500);
+      motors.updateSpeeds(0,0);
+      delay(500);
+      motors.driveBackwards();
+      delay(500);
+      current.direction.isFacingX = true;
       current.direction.isForward = false;
       //driveAvoidingObstacles(5,2);
       //driveAvoidingObstacles(3,2);
@@ -556,18 +592,36 @@ void houseSegment(int location){
   else if(location == 2){
       driveAvoidingObstacles(0,0);
       turnController(-90);
-      current.direction.isFacingX = !current.direction.isFacingX;
+      motors.driveForward();
+      delay(500);
+      motors.updateSpeeds(0,0);
+      delay(500);
+      motors.driveBackwards();
+      delay(500);
+      current.direction.isFacingX = false;
       current.direction.isForward = true;
-      driveAvoidingObstacles(2,1);
-      driveAvoidingObstacles(3,3);
+      driveAvoidingObstacles(1,3);
+      turnController(90);
+      motors.driveForward();
+      delay(500);
+      motors.updateSpeeds(0,0);
+      delay(500);
+      motors.driveBackwards();
+      delay(500);
+      turnController(-90);
       driveAvoidingObstacles(0,3);
   }
   else if(location == 3){
       driveAvoidingObstacles(0,5);
       turnController(-90);
-      current.direction.isFacingX = !current.direction.isFacingX;
+      motors.driveForward();
+      delay(500);
+      motors.updateSpeeds(0,0);
+      delay(500);
+      motors.driveBackwards();
+      delay(500);
+      current.direction.isFacingX = true;
       current.direction.isForward = true;
-      driveAvoidingObstacles(2,3);
       driveAvoidingObstacles(2,4);
       driveAvoidingObstacles(3,5);
   }
@@ -1014,8 +1068,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 2 && currentY == 1)
     ) {
-        if (targetX == 2 && (targetY == 1 || targetY == 2)) {
+        if ((targetX == 2 && (targetY == 1 || targetY == 2)) 
+            ||
+            ((targetX == 0 || targetX == 1) && targetY == 0))
+        {
             return currentSum + abs(currentY - targetY);
+        }
+        else if (targetX == 0 && targetY == 1){
+            currentSum += abs(currentX - 0) + abs(currentY - 0);
+            return findNumSquaresToLocation(targetX, targetY, 0, 0, currentSum);
         }
         
         currentSum += abs(currentX - 3) + abs(currentY - 1);
@@ -1264,7 +1325,6 @@ int roundToSquare(float distanceValue) {
         return 6;
     }
 }
-
 void innerDriveAvoidingObstacles(int targetX, int targetY) {
     Serial.print("innerDriveAvoidingObstacles: ");
     Serial.print(targetX);
@@ -1331,8 +1391,111 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         ||
         (current.x == 1 && current.y == 5)
     ) {
-        innerDriveAvoidingObstacles(0, 3);
+        if (
+            (targetX == 0 && targetY == 4)
+            ||
+            (targetX == 0 && targetY == 5)
+            ||
+            (targetX == 1 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(0, 3);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 4 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 1)
+    ) {
+        if (
+            (targetX == 4 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 1)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(5, 2);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 5 && current.y == 4)
+        ||
+        (current.x == 4 && current.y == 5)
+        ||
+        (current.x == 5 && current.y == 5)
+    ) {
+        if (
+            (targetX == 5 && targetY == 4)
+            ||
+            (targetX == 4 && targetY == 5)
+            ||
+            (targetX == 5 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 5);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 0 && current.y == 0)
+        ||
+        (current.x == 0 && current.y == 1)
+        ||
+        (current.x == 1 && current.y == 0)
+    ) {
+        if (
+            (targetX == 0 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(2, 0);
+            if (targetX == 2 && targetY == 1) {
+                innerDriveAvoidingObstacles(2, 1);
+            } else {
+                driveAvoidingObstacles(targetX, targetY);
+            }
+        }
+    }
+    else if (
+        (current.x == 1 && current.y == 2)
+    ) {
+        innerDriveAvoidingObstacles(1, 3);
         driveAvoidingObstacles(targetX, targetY);
+    }
+    else if (
+        (current.x == 2 && current.y == 0)
+        ||
+        (current.x == 2 && current.y == 1)
+    ) {
+        if (
+            (targetX == 2 && targetY == 0)
+            ||
+            (targetX == 2 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 0)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else if (targetX == 0 && targetY == 1) {
+            innerDriveAvoidingObstacles(0, 0);
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 1);
+            driveAvoidingObstacles(targetX, targetY);
+        }
     }
     else if (
         (targetX == 0 && targetY == 4)
@@ -1345,16 +1508,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 4 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 1)
-    ) {
-        innerDriveAvoidingObstacles(5, 2);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 4 && targetY == 0)
         ||
         (targetX == 5 && targetY == 0)
@@ -1365,16 +1518,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 5 && current.y == 4)
-        ||
-        (current.x == 4 && current.y == 5)
-        ||
-        (current.x == 5 && current.y == 5)
-    ) {
-        innerDriveAvoidingObstacles(3, 5);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 5 && targetY == 4)
         ||
         (targetX == 4 && targetY == 5)
@@ -1383,20 +1526,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
     ) {
         innerDriveAvoidingObstacles(3, 5);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 0 && current.y == 0)
-        ||
-        (current.x == 0 && current.y == 1)
-        ||
-        (current.x == 1 && current.y == 0)
-    ) {
-        innerDriveAvoidingObstacles(2, 0);
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 0 && targetY == 0)
@@ -1410,28 +1539,10 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 1 && current.y == 2)
-    ) {
-        innerDriveAvoidingObstacles(1, 3);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 1 && targetY == 2)
     ) {
         innerDriveAvoidingObstacles(1, 3);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 2 && current.y == 0)
-        ||
-        (current.x == 2 && current.y == 1)
-    ) {
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            innerDriveAvoidingObstacles(3, 1);
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 2 && targetY == 0)
@@ -1453,7 +1564,8 @@ void driveToLocation(int targetX, int targetY) {
         bool isFacingWrongDirection = (current.direction.isForward) ? current.x > targetX : current.x < targetX;
         if (isFacingWrongDirection && current.y == targetY) {
             // y is correct but facing wrong dir
-            turnController(180);
+            turnController(90);
+            turnController(90);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
             int directionCompensator = (current.direction.isForward) ? 1 : -1;
@@ -1470,7 +1582,8 @@ void driveToLocation(int targetX, int targetY) {
         bool isFacingWrongDirection = (current.direction.isForward) ? current.y > targetY : current.y < targetY;
         if (isFacingWrongDirection && current.x == targetX) {
             // y is correct but facing wrong dir
-            turnController(180);
+            turnController(90);
+            turnController(90);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
             int directionCompensator = (current.direction.isForward) ? 1 : -1;
