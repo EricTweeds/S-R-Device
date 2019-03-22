@@ -59,6 +59,11 @@ MapManagerLib mapManager;
 #define Left1 6
 #define Left2 7
 
+struct HousesFound {
+    bool redHouseFound;
+    bool yellowHouseFound;
+};
+
 struct Direction {
     bool isFacingX;
     bool isForward;
@@ -80,8 +85,12 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
+const int startingX = 3;
+const int startingY = 5;
+
 Direction currentDir = { true, false };
-Position current = {3, 3, currentDir };
+Position current = {startingX, startingY, currentDir };
+HousesFound houses = { false, false };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -175,6 +184,26 @@ void driveDistance(float distance)
                 }
             }
             numSquaresTraversed++;
+        }
+
+        if(lookingForHouses) {
+          
+          int object = sensorLib.determineObject();
+          Serial.println(object);
+          if(object == PERSON || object == GROUP){
+            Serial.println(object);
+            motors.updateSpeeds(0, 0);
+            if(object == PERSON){
+              sensorLib.setRGBColour(YELLOW);
+              houses.yellowHouseFound = true;
+            }
+            else{
+              sensorLib.setRGBColour(RED);
+              houses.redHouseFound = true;
+            }
+            while(digitalRead(buttonPin) != HIGH) {}
+            motors.updateSpeeds(255, 255);
+          }
         }
         // Map location every square
         // if (currentDistance - rearStartingDis - (numTimesMapped * distanceForMapping) >= distanceForMapping) {
@@ -1775,4 +1804,232 @@ void mapCurrentLocation() {
             mapManager.setMapValue(i, current.y, mapManager.GROUND);
         }
     }
+}
+
+void findHouses() {
+  houses.redHouseFound = false;
+  houses.yellowHouseFound = false;
+
+  int startingLocation = 1;
+  // Change this value depending on start location
+  initializeStartingLocation(startingLocation);
+
+  int currentLocation = startingLocation;
+  
+  while(!houses.yellowHouseFound || !houses.redHouseFound){
+    houseSegment(currentLocation);
+    currentLocation++;
+    // loop if max value reached
+    if(currentLocation == 4){currentLocation == 0;}
+  }
+}
+
+void initializeStartingLocation(int location){
+  if(location == 0){
+    currentDir = { false, false }; // {facingx, facingpositive}
+    current = { 3, 5, currentDir };
+    turnController(90);
+  }
+  else if(location == 1){
+    currentDir = { true, false }; // {facingx, facingpositive}
+    current = { 5, 2, currentDir };
+    turnController(90);
+
+  }
+  else if(location == 2){
+    currentDir = { false, true }; // {facingx, facingpositive}
+    current = { 2, 0, currentDir };
+    turnController(90);
+
+  }
+  else if(location == 3){
+    currentDir = { true, true }; // {facingx, facingpositive}
+    current = { 0, 3, currentDir };
+    turnController(90);
+
+  }
+}
+
+void houseSegment(int location){
+  if(location == 0) {
+      if (houses.yellowHouseFound && houses.redHouseFound) {
+          if (startingX == 3 && startingY == 5) {
+            setRGBColour(BLUE);
+          } else {
+              driveToLocation(startingX, startingY);
+              setRGBColour(BLUE);
+          }
+      }
+      // go to 5,5
+      driveDistance(60);
+
+      // go to 5,4
+      turnController(-90);
+      driveDistance(20);
+
+      // return to 5,5
+      turnController(-90);
+      turnController(-90);
+      driveDistance(20);
+
+      // go to 3,5
+      turnController(90);
+      driveDistance(60);
+
+      // go to 3,3
+      turnController(90);
+      driveDistance(60);
+
+      // go to 4,3
+      turnController(90);
+      driveDistance(30);
+
+      // go to 4,2
+      turnController(-90);
+      driveDistance(30);
+
+      // go to 5,2
+      turnController(90);
+      driveDistance(30);
+      turnController(-90);
+  }
+  else if(location == 1){
+      if (houses.yellowHouseFound && houses.redHouseFound) {
+          if (startingX == 5 && startingY == 2) {
+            setRGBColour(BLUE);
+          } else {
+              driveToLocation(startingX, startingY);
+              setRGBColour(BLUE);
+          }
+      }
+      // go to 5,0
+      driveDistance(60);
+
+      // go to 4,0
+      turnController(-90);
+      driveDistance(20);
+
+      // return to 5,0
+      turnController(-90);
+      turnController(-90);
+      driveDistance(20);
+
+      // go to 5,2
+      turnController(90);
+      driveDistance(60);
+
+      // go to 3,2
+      turnController(90);
+      driveDistance(60);
+
+      // go to 3,1
+      turnController(90);
+      driveDistance(30);
+
+      // go to 2,1
+      turnController(-90);
+      driveDistance(30);
+
+      // go to 2,0
+      turnController(90);
+      driveDistance(30);
+      turnController(-90);
+  }
+  else if(location == 2) {
+      if (houses.yellowHouseFound && houses.redHouseFound) {
+          if (startingX == 2 && startingY == 0) {
+            setRGBColour(BLUE);
+          } else {
+              driveToLocation(startingX, startingY);
+              setRGBColour(BLUE);
+          }
+      }
+      // go to 0,0
+      driveDistance(60);
+
+      // go to 0,1
+      turnController(-90);
+      driveDistance(20);
+
+      // return to 0,0
+      turnController(-90);
+      turnController(-90);
+      driveDistance(20);
+
+      // go to 2,0
+      turnController(90);
+      driveDistance(60);
+
+      // go to 2,1
+      turnController(90);
+      driveDistance(30);
+
+      // go to 3,1
+      turnController(-90);
+      driveDistance(30);
+
+      // go to 3,3
+      turnController(90);
+      driveDistance(60);
+
+      // go to 1,3
+      turnController(90);
+      driveDistance(60);
+
+      // go to 1,2
+      turnController(90);
+      driveDistance(20);
+
+      // go to 1,3
+      turnController(-90);
+      turnController(-90);
+      driveDistance(20);
+
+      // go to 0,3
+      turnController(90);
+      driveDistance(30);
+      turnController(-90);
+  }
+  else if(location == 3) { 
+      if (houses.yellowHouseFound && houses.redHouseFound) {
+          if (startingX == 0 && startingY == 3) {
+            setRGBColour(BLUE);
+          } else {
+              driveToLocation(startingX, startingY);
+              setRGBColour(BLUE);
+          }
+      }
+      // go to 0,5
+      driveDistance(60);
+
+      // go to 1,5
+      turnController(-90);
+      driveDistance(20);
+
+      // return to 0,5
+      turnController(-90);
+      turnController(-90);
+      driveDistance(20);
+
+      // go to 0,3
+      turnController(90);
+      driveDistance(60);
+
+      // go to 2,3
+      turnController(90);
+      driveDistance(60);
+
+      // go to 2,4
+      turnController(90);
+      driveDistance(30);
+
+      // go to 3,4
+      turnController(-90);
+      driveDistance(30);
+
+      // go to 3,5
+      turnController(90);
+      driveDistance(30);
+      turnController(-90);
+  }
 }
