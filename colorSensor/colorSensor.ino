@@ -30,24 +30,26 @@ void setup() {
   pinMode(sensorOut, INPUT);
   digitalWrite(S0,HIGH);
   digitalWrite(S1,LOW);
-  setCSLights(true);
+//  pinMode(45, OUTPUT);
+//  digitalWrite(45, HIGH);
+  setCSLights(false);
 }
 
 void loop() {
   RGB colour = getColour();
-  //logColourVal(colour);
-  char object = determineObject(colour);
-  Serial.println(object);
-  delay(500);
+  logColourVal(colour);
+  //char object = determineObject(colour);
+  //Serial.println(object);
+  //delay(500);
 }
 
 char determineObject(RGB colour) {
-  Serial.println(colour.B);
-  Serial.println(colour.G);
-  if (colour.B > 39 && colour.G < 33) {
+  if ((colour.B > 41.5 && colour.G < 32) || colour.G < 31) {
     return PERSON;
-  } else if (colour.B < 37 && colour.G > 35) {
+  } else if ((colour.B < 36 && colour.G > 35.5 && colour.R < 21) || colour.R < 16.5) {
     return GROUP;
+  } else if (colour.C > 11) {
+    return CANDLE; 
   } else {
     return UNKNOWN;
   }

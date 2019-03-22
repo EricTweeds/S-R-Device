@@ -5,7 +5,14 @@
 MPU9250 IMU(Wire,0x69);
 
 SensorLib::SensorLib() {
-    //constructor
+  //constructor
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
+  digitalWrite(S0,HIGH);
+  digitalWrite(S1,LOW);
 }
 
 void SensorLib::toggleLED(int pin) {
@@ -71,13 +78,20 @@ RGB SensorLib::_getColour() {
 char SensorLib::determineObject() {
   //call when close to object (~2.5-3in) returns what it is
   RGB colour = _getColour();
-  if (colour.B > 39 && colour.G < 33) {
+  if ((colour.B > 41.5 && colour.G < 32) || colour.G < 31) {
     return PERSON;
-  } else if (colour.B < 37 && colour.G > 35) {
+  } else if ((colour.B < 36 && colour.G > 35.5 && colour.R < 21) || colour.R < 16.5) {
     return GROUP;
+  } else if (colour.C > 11) {
+    return CANDLE; 
   } else {
     return UNKNOWN;
   }
+}
+
+bool SensorLib::checkCandle() {
+  RGB colour = _getColour();
+  return colour.C > 11;
 }
 
 void SensorLib::setCSLights(bool on) {

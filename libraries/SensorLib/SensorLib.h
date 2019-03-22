@@ -19,6 +19,7 @@
 #define UNKNOWN '?'
 #define PERSON 'P'
 #define GROUP 'A'
+#define CANDLE 'C'
 
 #include "Arduino.h"
 #include "MPU9250.h"
@@ -41,6 +42,7 @@ class SensorLib
     void logColourVal(RGB colour);
     RGB _getColour();
     char determineObject();
+    bool checkCandle();
     void setCSLights(bool on);
     void setRGBColour(int colour);
     void _setColour(bool r, bool g, bool b);
