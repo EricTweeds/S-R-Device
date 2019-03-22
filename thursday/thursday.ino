@@ -80,8 +80,8 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
-Direction currentDir = { false, true };
-Position current = { 2, 0, currentDir };
+Direction currentDir = { false, false };
+Position current = {3, 5, currentDir };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -195,11 +195,11 @@ void driveDistance(float distance)
         float ratio = output * 2;
         if (ratio > 0) 
         {
-            motors.updateSpeeds(255 / ratio, 255); // what if ratio is between 0 and 1? it will try to increase the wheel speed? CB
+            motors.updateSpeeds(255 / (ratio + 1), 255); // what if ratio is between 0 and 1? it will try to increase the wheel speed? CB
         }
         else if (ratio < 0)
         {
-            motors.updateSpeeds(255, 255 / (-1 * ratio));
+            motors.updateSpeeds(255, 255 / abs(ratio - 1));
         }
         else
         {
@@ -250,7 +250,7 @@ void turnController(float setP)
     Serial.println(setP);
 
     float dt = 0.01;
-    float kp = 0.1, ki = 0.05, kd = 0.01;
+    float kp = 0.1, ki = 0.1, kd = 0.01;
     float integral = 0.0;
     float lastError = 0.0;
     float error[20] = {0};
@@ -296,12 +296,12 @@ void turnController(float setP)
         }
         else if (ratio > 0)
         {
-            motors.updateSpeeds(255 / ratio, 255);
+            motors.updateSpeeds(255 / (ratio + 1), 255);
             motors.setDirectionRight();
         }
         else if (ratio < 0)
         {
-            motors.updateSpeeds(255, 255 / (-1 * ratio));
+            motors.updateSpeeds(255, 255 / abs(ratio - 1));
             motors.setDirectionLeft();
         }
         else
@@ -456,6 +456,8 @@ void setup()
     
     sensorLib.InitializeMagnetSensor();
 
+    sensorLib.setCSLights(true);
+
     // Loop over an grab garbage values from accelerometer
     float value;
     for (int i = 2000; i > 0; i--)
@@ -488,8 +490,13 @@ void loop()
     // Serial.print("  ");
     // Serial.println(frontSonar.getAverageDistance(10));
 
-    mapArea();
+    // mapArea();
     // driveDistance(60);
+    // findCandle();
+    // driveDistance(60);
+    turnController(90);
+    delay(2000);
+    turnController(-90);
 
     // findFood();
     while (true) {}
@@ -672,186 +679,6 @@ bool searchForCandle(float &offsetAngle, float minAngle) {
     return true;
 }
 
-bool findCandle() {
-
-    int ambientFlameValue;
-    int flameValue = analogRead(flameSensorPin);
-    while(ambientFlameValue - flameValue < 100 ) {
-        driveDistance(squareDistance);
-    }
-    
-
-    // // while candle not found and not reached end
-    // turnController(90);
-    // if (scanForCandle()) {
-        
-    // }
-    // turnController(-180);
-
-    // float firstCandleAngle;
-    // if (!searchForCandle(firstCandleAngle, -90)) {
-    //     return false;
-    // }
-
-    // float minCandleAngle;
-    // if (firstCandleAngle < 0) {
-    //     // candle is to the left
-    //     minCandleAngle = (current.direction.isForward) ? minCandleAngle = 0 : minCandleAngle = -180;
-    // } else {
-    //     // candle is to the right
-    //     minCandleAngle = (current.direction.isForward) ? minCandleAngle = -180 : minCandleAngle = 0;
-    // }
-
-    // driveAvoidingObstacles(3, 3);
-
-    // float secondCandleAngle;
-    // if (!searchForCandle(secondCandleAngle, minCandleAngle)) {
-    //     return false;
-    // }
-
-    // if (firstCandleAngle < 0) {
-    //     if (secondAngle < 90) {
-
-    //     } else  {
-
-    //     }
-    // } else {
-    //     if (secondAngle > -90) {
-
-    //     } else  {
-            
-    //     }
-    // }
-
-
-
-    // int directionCompensator = (current.direction.isForward) ? 1 : -1;
-
-
-
-    // float firstCandleAngle;
-    // if (!searchForCandle(firstCandleAngle, -90)) {
-    //     return false;
-    // }
-
-    // float minCandleAngle;
-    // if (abs(firstCandleAngle) > 87 && abs(firstCandleAngle) < 93) {
-    //     if (current.direction.isFacingX) {
-    //         candleX = current.x;
-    //     } else {
-    //         candleY = current.y;
-    //     }
-    // } else if (abs(firstCandleAngle) < 3) {
-    //     if (current.direction.isFacingX) {
-    //         candleY = current.y;
-    //     } else {
-    //         candleX = current.x;
-    //     }
-    // } else if (firstCandleAngle < -3) {
-    //     minCandleAngle = -180;
-    // } else {
-    //     minCandleAngle = 0;
-    // }
-
-    // if (current.x == 0 && current.y == 3) {
-        
-    //     driveAvoidingObstacles(3, 3);
-
-    // } else {
-    //     driveAvoidingObstacles(3, 2);
-    // }
-    // int candleX, candleY;
-    // float firstCandleAngle;
-    // if (!searchForCandle(firstCandleAngle, -90)) {
-    //     return false;
-    // }
-
-    // // float minCandleAngle;
-    // // if (candleAngle > -93 && candleAngle < -87) {
-
-    // // } else if (candleAngle > 87 && candleAngle < 93) {
-
-    // // } else if (candleAngle < -3) {
-    // //     minCandleAngle = -180;
-    // // } else if (candleAngle < 3) {
-    // //     // candle infront of robot
-    // // } else {
-    // //     minCandleAngle = 0;
-    // // }
-
-    // float minCandleAngle;
-    // if (abs(firstCandleAngle) > 87 && abs(firstCandleAngle) < 93) {
-    //     if (current.direction.isFacingX) {
-    //         candleX = current.x;
-    //     } else {
-    //         candleY = current.y;
-    //     }
-    // } else if (abs(firstCandleAngle) < 3) {
-    //     if (current.direction.isFacingX) {
-    //         candleY = current.y;
-    //     } else {
-    //         candleX = current.x;
-    //     }
-    // } else if (firstCandleAngle < -3) {
-    //     minCandleAngle = -180;
-    // } else {
-    //     minCandleAngle = 0;
-    // }
-
-    // driveAvoidingObstacles(3, 3);
-
-    // float secondCandleAngle;
-    // if (!searchForCandle(secondCandleAngle, minCandleAngle)) {
-    //     return false;
-    // }
-
-    // if (abs(secondCandleAngle) > 87 && abs(secondCandleAngle) < 93) {
-    //     if (current.direction.isFacingX) {
-    //         candleX = current.x;
-    //     } else {
-    //         candleY = current.y;
-    //     }
-    // } else if (abs(secondCandleAngle) > 93) {
-    //     if (current.direction.isFacingX && !current.direction.isForward) {
-    //         candleX = current.x + 1;
-    //     } else if (!current.direction.isFacingX && current.direction.isForward) {
-    //         candleY = current.y - 1;
-    //     } else if (!current.direction.isFacingX && !current.direction.isForward) {
-    //         candleY = current.y + 1;
-    //         if (firstCandleAngle > 3) {
-    //             candleX = 5;
-    //         } else {
-    //             driveAvoidingObstacles(1, 3);
-    //             float thirdCandleAngle;
-    //             if (!searchForCandle(secondCandleAngle, minCandleAngle)) {
-    //                 return false;
-    //             }
-    //         }
-    //     } else {
-    //         // determine which position
-    //     }
-    // }
-
-
-    // if (
-    //     (current.x == 0 && current.y == 3)
-    //     ||
-    //     (current.x == 3 && current.y == 5)
-    // ) {
-    //     driveAvoidingObstacles(3, 3);
-    // } else {
-    //     driveAvoidingObstacles(3, 2);
-    // }
-
-    
-
-    // if (!searchForCandle(candleAngle, minCandleAngle)) {
-    //     return false;
-    // }
-
-
-}
-
 void findClosestNotVisited(int &x, int &y, int currentX, int currentY, char value) {
     int minDistance = 100;
     for (int i = 0; i < 6; i++) {
@@ -951,6 +778,7 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         if ((targetX == 2 && (targetY == 1 || targetY == 2)) 
             ||
             ((targetX == 0 || targetX == 1) && targetY == 0)
+        )
         {
             return currentSum + abs(currentY - targetY);
         }
@@ -1140,6 +968,126 @@ void moveForwardOneSquare() {
         }
         driveAvoidingObstacles(targetX, targetY);
     }
+}
+
+void driveBackwards(float distance) {
+    if (distance < 1) {
+        return;
+    }
+
+    float frontStartingDis;
+    float rearStartingDis;
+    int numSmaples = 20;
+    float currentDistance;
+    float sumDistance = 0;
+    int numSquares = floor(distance / squareDistance);
+    do {
+        rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
+        frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
+        sumDistance = frontStartingDis + rearStartingDis;
+        currentDistance = rearStartingDis;
+        if (rearStartingDis > 500 && frontStartingDis < 190) {
+            Serial.print(rearStartingDis);
+            Serial.print("  ");
+            Serial.println(frontStartingDis);
+            motors.driveForward();
+            delay(500);
+            motors.updateSpeeds(0, 0);
+        }
+    } while (sumDistance > 165);
+
+    unsigned long startTime = millis();
+    motors.driveBackwards();
+    while ((rearStartingDis - currentDistance < distance || millis() - startTime < 5000 * numSquares)) {
+        currentDistance = rearSonar.getAverageDistance(sonarAverages);
+    }
+    motors.updateSpeeds(0, 0);
+
+    if (current.direction.isFacingX) {
+        if (current.direction.isForward) {
+            current.x -= numSquares;
+        } else {
+            current.x += numSquares;
+        }
+    } else {
+        if (current.direction.isForward) {
+            current.y -= numSquares;
+        } else {
+            current.y += numSquares;
+        }
+    }
+}
+
+void findCandle() {
+    int numSquaresTravelled = 0;
+    int flameValue = 999, prevFlameValue = 10000;
+    // NEED TO CONSIDER IF CANDLE IS IN OUR PATH
+    do {
+        if (numSquaresTravelled >= 5) {
+            turnController(90);
+            turnController(90);
+            current.direction.isForward = !current.direction.isForward;
+        }
+        numSquaresTravelled = 0;
+        prevFlameValue = flameValue;
+        flameValue = analogRead(flameSensorPin);
+
+        while (numSquaresTravelled < 5 && flameValue < prevFlameValue + 10 && !sensorLib.checkCandle()) {
+
+            moveForwardOneSquare();
+            
+            prevFlameValue = flameValue;
+            flameValue = analogRead(flameSensorPin);
+            Serial.print("Flame Value: ");
+            Serial.println(flameValue);
+            Serial.print("Prev Value: ");
+            Serial.println(prevFlameValue);
+            numSquaresTravelled++;
+            Serial.print("numSquaresTravelled: ");
+            Serial.println(numSquaresTravelled);
+        }
+        Serial.println("Out of inner loop");
+    } while(numSquaresTravelled >= 5);
+
+    Serial.println("Out of both loops");
+
+    if (!sensorLib.checkCandle()) {
+        driveBackwards(squareDistance);
+        Serial.print("Candle found");
+
+        turnController(-90);
+        if (current.direction.isFacingX) {
+            current.direction.isForward = !current.direction.isForward;
+        }
+        current.direction.isFacingX = !current.direction.isFacingX;
+    }
+
+    motors.driveForward();
+    while (!sensorLib.checkCandle()) {}
+    motors.updateSpeeds(0, 0);
+
+    bool colorCandleOut = false;
+    while (colorCandleOut && frontSonar.getAverageDistance(10) > 5) {
+        digitalWrite(fanPin, HIGH);
+        motors.driveForward();
+        delay(100);
+        motors.updateSpeeds(0, 0);
+        delay(2000);
+        digitalWrite(fanPin, LOW);
+        delay(500);
+        for (int i = 0; i < 30; i++) {
+            colorCandleOut = colorCandleOut || sensorLib.checkCandle();
+            delay(50);
+        }
+        delay(100);
+    }
+    while (sensorLib.checkCandle()) {
+        sensorLib.setRGBColour(YELLOW);
+    }
+    sensorLib.setRGBColour(OFF);
+
+    digitalWrite(fanPin, LOW);
+    sensorLib.setRGBColour(RED);
 }
 
 void mapArea() {
