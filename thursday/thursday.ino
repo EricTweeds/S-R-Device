@@ -118,7 +118,7 @@ void driveDistance(float distance)
     float currAngle = 0.0;
     float startingAngle;
     float sumAngles = 0;
-    int numSmaples = 20;
+    int numSamples = 20;
     
     float currentDistance = rearSonar.getAverageDistance(sonarAverages);
     float prevDistance = currentDistance;
@@ -143,11 +143,11 @@ void driveDistance(float distance)
         }
     } while (sumDistance > 165);
 
-    for (int i = 0; i < numSmaples; i++) {
+    for (int i = 0; i < numSamples; i++) {
         while (!getAngle(startingAngle)) {}
         sumAngles += startingAngle;
     }
-    startingAngle = sumAngles / numSmaples;
+    startingAngle = sumAngles / numSamples;
 
     Serial.print("Starting Distance: ");
     Serial.println(rearStartingDis);
@@ -157,7 +157,7 @@ void driveDistance(float distance)
     while (
         (currentDistance - rearStartingDis < distance || millis() - startTime < 5000 * totalNumSquares)
         &&
-        frontSonar.getAverageDistance(sonarAverages) > 5
+        frontSonar.getAverageDistance(sonarAverages) > 5 //do we need this? does this interfere with driving towards walls? CB
     )
     {
         if (currentDistance - rearStartingDis - (numSquaresTraversed * squareDistance) >= squareDistance) {
@@ -193,9 +193,9 @@ void driveDistance(float distance)
 
         // Arduino map func => (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         float ratio = output * 2;
-        if (ratio > 0)
+        if (ratio > 0) 
         {
-            motors.updateSpeeds(255 / ratio, 255);
+            motors.updateSpeeds(255 / ratio, 255); // what if ratio is between 0 and 1? it will try to increase the wheel speed? CB
         }
         else if (ratio < 0)
         {
@@ -258,14 +258,14 @@ void turnController(float setP)
 
     bool turned = false;
     float currAngle = 0;
-    int numSmaples = 10;
+    int numSamples = 10;
     float sumAngles = 0;
     float startingAngle;
-    for (int i = 0; i < numSmaples; i++) {
+    for (int i = 0; i < numSamples; i++) {
         while (!getAngle(startingAngle)) {}
         sumAngles += startingAngle;
     }
-    startingAngle = sumAngles / numSmaples;
+    startingAngle = sumAngles / numSamples;
 
     while (!turned)
     {
@@ -287,7 +287,7 @@ void turnController(float setP)
         if (output > 1)
         {
             motors.updateSpeeds(255, 255);
-            motors.setDirectionRight();
+            motors.setDirectionRight(); //Should this be before updating the motor speeds? CB
         }
         else if (output < -1)
         {
@@ -948,8 +948,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 2 && currentY == 1)
     ) {
-        if (targetX == 2 && (targetY == 1 || targetY == 2)) {
+        if ((targetX == 2 && (targetY == 1 || targetY == 2)) 
+            ||
+            ((targetX == 0 || targetX == 1) && targetY == 0)
+        {
             return currentSum + abs(currentY - targetY);
+        }
+        else if (targetX == 0 && targetY == 1){
+            currentSum += abs(currentX - 0) + abs(currentY - 0);
+            return findNumSquaresToLocation(targetX, targetY, 0, 0, currentSum);
         }
         
         currentSum += abs(currentX - 3) + abs(currentY - 1);
@@ -1387,8 +1394,15 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         if (
             (targetX == 2 && targetY == 0)
             ||
-            (targetY == 2 && targetY == 1)
+            (targetX == 2 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 0)
         ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else if (targetX == 0 && targetY == 1) {
+            innerDriveAvoidingObstacles(0, 0);
             innerDriveAvoidingObstacles(targetX, targetY);
         } else {
             innerDriveAvoidingObstacles(3, 1);
