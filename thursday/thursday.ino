@@ -1093,7 +1093,11 @@ void moveForwardOneSquare() {
     char groundType = mapManager.getMapValue(targetX, targetY);
     if (groundType == mapManager.GROUND || groundType == UNKNOWN) {
         driveDistance(squareDistance);
-    } else {
+    } 
+    // else if (groundType == mapManager.ITEM) {
+
+    // } 
+    else {
         if (current.direction.isFacingX) {
             int firstY = targetY + 1;
             int secondY = targetY - 1;
@@ -1292,8 +1296,104 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         ||
         (current.x == 1 && current.y == 5)
     ) {
-        innerDriveAvoidingObstacles(0, 3);
+        if (
+            (targetX == 0 && targetY == 4)
+            ||
+            (targetX == 0 && targetY == 5)
+            ||
+            (targetX == 1 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(0, 3);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 4 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 1)
+    ) {
+        if (
+            (targetX == 4 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 1)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(5, 2);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 5 && current.y == 4)
+        ||
+        (current.x == 4 && current.y == 5)
+        ||
+        (current.x == 5 && current.y == 5)
+    ) {
+        if (
+            (targetX == 5 && targetY == 4)
+            ||
+            (targetX == 4 && targetY == 5)
+            ||
+            (targetX == 5 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 5);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 0 && current.y == 0)
+        ||
+        (current.x == 0 && current.y == 1)
+        ||
+        (current.x == 1 && current.y == 0)
+    ) {
+        if (
+            (targetX == 0 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(2, 0);
+            if (targetX == 2 && targetY == 1) {
+                innerDriveAvoidingObstacles(2, 1);
+            } else {
+                driveAvoidingObstacles(targetX, targetY);
+            }
+        }
+    }
+    else if (
+        (current.x == 1 && current.y == 2)
+    ) {
+        innerDriveAvoidingObstacles(1, 3);
         driveAvoidingObstacles(targetX, targetY);
+    }
+    else if (
+        (current.x == 2 && current.y == 0)
+        ||
+        (current.x == 2 && current.y == 1)
+    ) {
+        if (
+            (targetX == 2 && targetY == 0)
+            ||
+            (targetY == 2 && targetY == 1)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 1);
+            driveAvoidingObstacles(targetX, targetY);
+        }
     }
     else if (
         (targetX == 0 && targetY == 4)
@@ -1306,16 +1406,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 4 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 1)
-    ) {
-        innerDriveAvoidingObstacles(5, 2);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 4 && targetY == 0)
         ||
         (targetX == 5 && targetY == 0)
@@ -1326,16 +1416,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 5 && current.y == 4)
-        ||
-        (current.x == 4 && current.y == 5)
-        ||
-        (current.x == 5 && current.y == 5)
-    ) {
-        innerDriveAvoidingObstacles(3, 5);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 5 && targetY == 4)
         ||
         (targetX == 4 && targetY == 5)
@@ -1344,20 +1424,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
     ) {
         innerDriveAvoidingObstacles(3, 5);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 0 && current.y == 0)
-        ||
-        (current.x == 0 && current.y == 1)
-        ||
-        (current.x == 1 && current.y == 0)
-    ) {
-        innerDriveAvoidingObstacles(2, 0);
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 0 && targetY == 0)
@@ -1371,28 +1437,10 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 1 && current.y == 2)
-    ) {
-        innerDriveAvoidingObstacles(1, 3);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 1 && targetY == 2)
     ) {
         innerDriveAvoidingObstacles(1, 3);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 2 && current.y == 0)
-        ||
-        (current.x == 2 && current.y == 1)
-    ) {
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            innerDriveAvoidingObstacles(3, 1);
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 2 && targetY == 0)
