@@ -80,8 +80,8 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
-Direction currentDir = { true, false };
-Position current = { 5, 2, currentDir };
+Direction currentDir = { false, true };
+Position current = { 2, 0, currentDir };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -246,6 +246,9 @@ void driveDistance(float distance)
 
 void turnController(float setP)
 {
+    Serial.print("Turning: ");
+    Serial.println(setP);
+
     float dt = 0.01;
     float kp = 0.1, ki = 0.05, kd = 0.01;
     float integral = 0.0;
@@ -1108,7 +1111,21 @@ void moveForwardOneSquare() {
                 targetY = firstY;
             }
         } else {
-
+            int firstX = targetX + 1;
+            int secondX = targetX - 1;
+            int firstDis = findNumSquaresToLocation(firstX, targetY, current.x, current.y, 0);
+            int secondDis = findNumSquaresToLocation(secondX, targetY, current.x, current.y, 0);
+            if (firstDis == secondDis) {
+                if (current.x <= 2) {
+                    targetX = firstX;
+                } else {
+                    targetX = secondX;
+                }
+            } else if (firstDis > secondDis) {
+                targetX = secondX;
+            } else {
+                targetX = firstX;
+            }
         }
         driveAvoidingObstacles(targetX, targetY);
     }
@@ -1117,20 +1134,26 @@ void moveForwardOneSquare() {
 void mapArea() {
     int numSquaresTravelled = 0;
     int x, y;
-    while (numSquaresTravelled < 5) { //&& !mapManager.getLocation(x, y, mapManager.ITEM)) {
+    int flameValue = 1000;
+    mapCurrentLocation();
+    mapManager.printMap();
+    while (numSquaresTravelled < 5 && flameValue > 950) { //&& !mapManager.getLocation(x, y, mapManager.ITEM)) {
+        moveForwardOneSquare();
         mapCurrentLocation();
         mapManager.printMap();
         Serial.print("Flame Value: ");
-        Serial.println(analogRead(flameSensorPin));
-        moveForwardOneSquare();
+        flameValue = analogRead(flameSensorPin);
+        Serial.println(flameValue);
         
         numSquaresTravelled++;
+        Serial.print("numSquaresTravelled: ");
+        Serial.println(numSquaresTravelled);
     }
     mapManager.printMap();
 
     Serial.print("Found item");
     
-    driveToItem();
+    // driveToItem();
 }
 
 void driveToItem() {
