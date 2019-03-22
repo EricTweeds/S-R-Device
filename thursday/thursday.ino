@@ -85,10 +85,10 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
-const int startingX = 3;
-const int startingY = 5;
+const int startingX = 2;
+const int startingY = 0;
 
-Direction currentDir = { false, false };
+Direction currentDir = { false, true };
 Position current = {startingX, startingY, currentDir };
 HousesFound houses = { false, false };
 
@@ -113,6 +113,9 @@ void driveDistance(float distance)
     if (distance < 1) {
         return;
     } 
+
+    Serial.print("Driving Distance: ");
+    Serial.println(distance);
 
     float dt = 0.01;
     float kp = 0.02, ki = 0.05, kd = 0.01;
@@ -188,25 +191,29 @@ void driveDistance(float distance)
             numSquaresTraversed++;
         }
 
-        if(lookingForHouses) {
+        // if(lookingForHouses) {
           
-          int object = sensorLib.determineObject();
-          Serial.println(object);
-          if(object == PERSON || object == GROUP){
-            Serial.println(object);
-            motors.updateSpeeds(0, 0);
-            if(object == PERSON){
-              sensorLib.setRGBColour(YELLOW);
-              houses.yellowHouseFound = true;
-            }
-            else{
-              sensorLib.setRGBColour(RED);
-              houses.redHouseFound = true;
-            }
-            while(digitalRead(buttonPin) != HIGH) {}
-            motors.updateSpeeds(255, 255);
-          }
-        }
+        //   char object = sensorLib.determineObject();
+        //   if(object == PERSON || object == GROUP){
+        //     Serial.print("Seeing Object: ");
+        //     if (object == PERSON) {
+        //         Serial.println("PERSON");
+        //     } else {
+        //         Serial.println("GROUP");
+        //     }
+        //     motors.updateSpeeds(0, 0);
+        //     if(object == PERSON){
+        //       sensorLib.setRGBColour(YELLOW);
+        //       houses.yellowHouseFound = true;
+        //     }
+        //     else{
+        //       sensorLib.setRGBColour(RED);
+        //       houses.redHouseFound = true;
+        //     }
+        //     while(digitalRead(buttonPin) != HIGH) {}
+        //     motors.updateSpeeds(255, 255);
+        //   }
+        // }
         // Map location every square
         // if (currentDistance - rearStartingDis - (numTimesMapped * distanceForMapping) >= distanceForMapping) {
         //     motors.updateSpeeds(0, 0);
@@ -517,6 +524,19 @@ void loop()
         return;
     }
 
+    // Serial.println(rightSonar.getAverageDistance(30));
+    // Serial.println(leftSonar.getAverageDistance(30));
+    // Serial.println("-----------");
+    current.x = 0;
+    current.y = 3;
+    current.direction.isFacingX = true;
+    current.direction.isForward = true;
+    mapArea();
+    // findFood();
+    // digitalWrite(fanPin, HIGH);
+    // findCandle();
+    while(true) {}
+
     // Serial.print(rearSonar.getAverageDistance(10));
     // Serial.print("  ");
     // Serial.println(frontSonar.getAverageDistance(10));
@@ -535,11 +555,50 @@ void loop()
 //    Serial.println(current.y);
 //    driveAvoidingObstacles(2,4);
 
-    findCandle();
-    findFood();
-    driveToLocation(startingX, startingY);
-    findHouses();
-    while (true) {}
+    // current.x = 3;
+    // current.y = 5;
+    // current.direction.isForward = false;
+    // current.direction.isFacingX = false;
+    // findHouses();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+
+    // current.x = 5;
+    // current.y = 2;
+    // current.direction.isForward = false;
+    // current.direction.isFacingX = true;
+    // findCandle();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+
+
+
+    // current.x = 0;
+    // current.y = 3;
+    // current.direction.isForward = true;
+    // current.direction.isFacingX = true;
+    // findFood();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+
+    // current.x = 2;
+    // current.y = 0;
+    // current.direction.isForward = true;
+    // current.direction.isFacingX = false;
+    // findHouses();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+
+
+    // while (true) {}
 
     // driveDistance(60);
     // while(true) {}
@@ -736,11 +795,13 @@ bool searchForCandle(float &offsetAngle, float minAngle) {
     return true;
 }
 
-void findClosestNotVisited(int &x, int &y, int currentX, int currentY, char value) {
+bool findClosestNotVisited(int &x, int &y, int currentX, int currentY, char value) {
     int minDistance = 100;
+    bool foundValue = false;
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 6; j++) {
             if (mapManager.getMapValue(i, j) == value && !mapManager.getVisited(i, j)) {
+                foundValue = true;
                 int distance = findNumSquaresToLocation(i, j, currentX, currentY, 0);
                 if (distance < minDistance) {
                     x = i;
@@ -750,6 +811,7 @@ void findClosestNotVisited(int &x, int &y, int currentX, int currentY, char valu
             }
         }
     }
+    return foundValue;
 }
 
 void findClosest(int &x, int &y, int currentX, int currentY, char value) {
@@ -1199,18 +1261,20 @@ void findCandle() {
     motors.updateSpeeds(0, 0);
 
     bool colorCandleOut = false;
-    while (colorCandleOut && frontSonar.getAverageDistance(10) > 5) {
+    float frontDistance = frontSonar.getAverageDistance(10);
+    while (colorCandleOut && (frontDistance > 5 && frontDistance < 1300)) {
         digitalWrite(fanPin, HIGH);
         Serial.println("Fan on");
         motors.driveForward();
         delay(750);
         motors.updateSpeeds(0, 0);
         delay(750);
-        for (int i = 0; i <10; i++) {
+        for (int i = 0; i < 10; i++) {
             colorCandleOut = colorCandleOut || sensorLib.checkCandle();
             delay(50);
         }
         delay(100);
+        frontDistance = frontSonar.getAverageDistance(10);
     }
     while (sensorLib.checkCandle()) {
         digitalWrite(fanPin, HIGH);
@@ -1234,31 +1298,30 @@ void findCandle() {
 void mapArea() {
     int numSquaresTravelled = 0;
     int x, y;
-    int flameValue = 1000;
     mapCurrentLocation();
     mapManager.printMap();
-    while (numSquaresTravelled < 5 && flameValue > 950) { //&& !mapManager.getLocation(x, y, mapManager.ITEM)) {
+    while (numSquaresTravelled < 5) {
         moveForwardOneSquare();
         mapCurrentLocation();
         mapManager.printMap();
-        Serial.print("Flame Value: ");
-        flameValue = analogRead(flameSensorPin);
-        Serial.println(flameValue);
         
         numSquaresTravelled++;
         Serial.print("numSquaresTravelled: ");
         Serial.println(numSquaresTravelled);
     }
     mapManager.printMap();
-
-    Serial.print("Found item");
     
-    // driveToItem();
+
+    while (driveToItem()) {
+        mapManager.printMap();
+    }
 }
 
-void driveToItem() {
+bool driveToItem() {
     int targetX, targetY, driveX, driveY;
-    findClosest(targetX, targetY, current.x, current.y, mapManager.ITEM);
+    if (!findClosestNotVisited(targetX, targetY, current.x, current.y, mapManager.ITEM)) {
+        return false;
+    }
     findBestSquareToLandAt(driveX, driveY, targetX, targetY);
 
     driveAvoidingObstacles(driveX, driveY);
@@ -1303,15 +1366,46 @@ void driveToItem() {
         current.direction.isFacingX = false;
     }
 
-    char houseType;
-    do {
-        houseType = sensorLib.determineObject();
-    } while(houseType == UNKNOWN);
-    if (houseType == GROUP) {
-        sensorLib.setRGBColour(RED);
+    if (frontSonar.getAverageDistance(50) < 25) {
+        float startingRearDistance = rearSonar.getAverageDistance(10);
+        motors.driveForward();
+        float frontDistance;
+        do {
+            frontDistance = frontSonar.getAverageDistance(10);
+        } while (frontDistance > 5 && frontDistance < 1000);
+        motors.updateSpeeds(0, 0);
+        int loopGuard = 0;
+        sensorLib.setRGBColour(PURPLE);
+        char houseType;
+        do {
+            houseType = sensorLib.determineObject();
+            loopGuard++;
+        } while(houseType == UNKNOWN && loopGuard < 100);
+        sensorLib.setRGBColour(OFF);
+        Serial.print("houseType: ");
+        Serial.println(houseType);
+        if (houseType == GROUP) {
+            sensorLib.setRGBColour(RED);
+            delay(2000);
+        } else if (houseType == PERSON) {
+            sensorLib.setRGBColour(GREEN);
+            delay(2000);
+        }
+        if(houseType != UNKNOWN){
+            mapManager.setMapValue(targetX, targetY, houseType);
+        }
+        else{
+            mapManager.setMapValue(targetX, targetY, mapManager.GROUND);
+        }
+        float endRearDistance = rearSonar.getAverageDistance(10);
+        driveBackwards(startingRearDistance - endRearDistance);
     } else {
-        sensorLib.setRGBColour(GREEN);
+        mapManager.setMapValue(targetX, targetY, mapManager.GROUND);
     }
+
+    sensorLib.setRGBColour(OFF);
+    mapManager.setVisited(targetX, targetY);
+    return true;
 }
 
 int roundToSquare(float distanceValue) {
@@ -1395,6 +1489,10 @@ void driveAvoidingObstacles(int targetX, int targetY) {
     Serial.print(targetX);
     Serial.print(", ");
     Serial.println(targetY);
+
+    if(current.x == targetX && current.y == targetY){
+        return;
+    }
 
     // Cover special cases
     if (
@@ -1487,14 +1585,27 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(1, 3);
         driveAvoidingObstacles(targetX, targetY);
     }
-    else if (
-        (current.x == 2 && current.y == 0)
-        ||
-        (current.x == 2 && current.y == 1)
-    ) {
+    else if (current.x == 2 && current.y == 1)
+    {
         if (
             (targetX == 2 && targetY == 0)
             ||
+            (targetX == 1 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 0)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else if (targetX == 0 && targetY == 1) {
+            innerDriveAvoidingObstacles(0, 0);
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 1);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (current.x == 2 && current.y == 0)
+    {
+        if (
             (targetX == 2 && targetY == 1)
             ||
             (targetX == 1 && targetY == 0)
@@ -1766,18 +1877,15 @@ void mapCurrentLocation() {
             frontX = current.x - frontSquares;
         }
 
-        mapManager.setMapValue(frontX, current.y, mapManager.ITEM);
+        if (frontSquares == 1) {
+            mapManager.setMapValue(frontX, current.y, mapManager.ITEM);
+        }
 
-        if (positiveSquares <= 2) {
+        if (positiveSquares <= 3) {
             mapManager.setMapValue(current.x, current.y + positiveSquares, mapManager.ITEM);
         }
-        if (negativeSquares <= 2) {
+        if (negativeSquares <= 3) {
             mapManager.setMapValue(current.x, current.y - negativeSquares, mapManager.ITEM);
-        }
-        int startingIndex = (negativeSquares <= 2) ? current.y - negativeSquares + 1 : current.y - 2;
-        int endIndex = (positiveSquares <= 2) ? current.y + positiveSquares - 1 : current.y + 2; 
-        for (int i = startingIndex; i <= endIndex; i++) {
-            mapManager.setMapValue(current.x, i, mapManager.GROUND);
         }
     } else {
         // Facing y dir
@@ -1794,18 +1902,15 @@ void mapCurrentLocation() {
             frontY = current.y - frontSquares;
         }
 
-        mapManager.setMapValue(current.x, frontY, mapManager.ITEM);
+        if (frontSquares == 1) {
+            mapManager.setMapValue(current.x, frontY, mapManager.ITEM);            
+        }
 
-        if (positiveSquares <= 2) {
+        if (positiveSquares <= 3) {
             mapManager.setMapValue(current.x + positiveSquares, current.y, mapManager.ITEM);
         }
-        if (negativeSquares <= 2) {
+        if (negativeSquares <= 3) {
             mapManager.setMapValue(current.x - negativeSquares, current.y, mapManager.ITEM);
-        }
-        int startingIndex = (negativeSquares <= 2) ? current.x - negativeSquares + 1 : current.x - 2;
-        int endIndex = (positiveSquares <= 2) ? current.x + positiveSquares - 1 : current.x + 2; 
-        for (int i = startingIndex; i <= endIndex; i++) {
-            mapManager.setMapValue(i, current.y, mapManager.GROUND);
         }
     }
 }
@@ -1855,7 +1960,12 @@ void initializeStartingLocation(int location){
 
 void houseSegment(int location){
   if(location == 0) {
+      Serial.println("Track 0");
       if (houses.yellowHouseFound && houses.redHouseFound) {
+          current.x = 3;
+          current.y = 5;
+          current.direction.isFacingX = true;
+          current.direction.isForward = true;
           if (startingX == 3 && startingY == 5) {
             sensorLib.setRGBColour(BLUE);
           } else {
@@ -1897,7 +2007,12 @@ void houseSegment(int location){
       turnController(-90);
   }
   else if(location == 1){
+      Serial.println("Track 1");
       if (houses.yellowHouseFound && houses.redHouseFound) {
+          current.x = 5;
+          current.y = 2;
+          current.direction.isFacingX = false;
+          current.direction.isForward = false;
           if (startingX == 5 && startingY == 2) {
             sensorLib.setRGBColour(BLUE);
           } else {
@@ -1939,7 +2054,12 @@ void houseSegment(int location){
       turnController(-90);
   }
   else if(location == 2) {
+      Serial.println("Track 2");
       if (houses.yellowHouseFound && houses.redHouseFound) {
+          current.x = 2;
+          current.y = 0;
+          current.direction.isFacingX = true;
+          current.direction.isForward = false;
           if (startingX == 2 && startingY == 0) {
             sensorLib.setRGBColour(BLUE);
           } else {
@@ -1994,7 +2114,12 @@ void houseSegment(int location){
       turnController(-90);
   }
   else if(location == 3) { 
+      Serial.println("Track 2");
       if (houses.yellowHouseFound && houses.redHouseFound) {
+          current.x = 0;
+          current.y = 3;
+          current.direction.isFacingX = false;
+          current.direction.isForward = true;
           if (startingX == 0 && startingY == 3) {
             sensorLib.setRGBColour(BLUE);
           } else {
