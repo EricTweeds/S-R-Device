@@ -88,7 +88,7 @@ const int sonarAverages = 10;
 const int startingX = 3;
 const int startingY = 5;
 
-Direction currentDir = { true, false };
+Direction currentDir = { false, false };
 Position current = {startingX, startingY, currentDir };
 HousesFound houses = { false, false };
 
@@ -100,6 +100,8 @@ SonarLib frontSonar = SonarLib(trigF, echoF);
 SonarLib rightSonar = SonarLib(trigR, echoR);
 SonarLib leftSonar = SonarLib(trigL, echoL);
 SonarLib rearSonar = SonarLib(trigB, echoB);
+
+bool lookingForHouses = false;
 
 void dmpDataReady()
 {
@@ -533,8 +535,10 @@ void loop()
 //    Serial.println(current.y);
 //    driveAvoidingObstacles(2,4);
 
-    // findCandle();
+    findCandle();
     findFood();
+    driveToLocation(startingX, startingY);
+    findHouses();
     while (true) {}
 
     // driveDistance(60);
@@ -1807,10 +1811,20 @@ void mapCurrentLocation() {
 }
 
 void findHouses() {
+  lookingForHouses = true;
   houses.redHouseFound = false;
   houses.yellowHouseFound = false;
 
-  int startingLocation = 1;
+  int startingLocation = 0;
+  if (startingX == 3 && startingY == 5) {
+      startingLocation = 0;
+  } else if (startingX == 5 && startingY == 2) {
+      startingLocation = 1;
+  } else if (startingX == 2 && startingY == 0) {
+      startingLocation = 2;
+  } else if (startingX == 0 && startingY == 3) {
+      startingLocation = 3;
+  }
   // Change this value depending on start location
   initializeStartingLocation(startingLocation);
 
@@ -1826,27 +1840,16 @@ void findHouses() {
 
 void initializeStartingLocation(int location){
   if(location == 0){
-    currentDir = { false, false }; // {facingx, facingpositive}
-    current = { 3, 5, currentDir };
     turnController(90);
   }
   else if(location == 1){
-    currentDir = { true, false }; // {facingx, facingpositive}
-    current = { 5, 2, currentDir };
     turnController(90);
-
   }
   else if(location == 2){
-    currentDir = { false, true }; // {facingx, facingpositive}
-    current = { 2, 0, currentDir };
     turnController(90);
-
   }
   else if(location == 3){
-    currentDir = { true, true }; // {facingx, facingpositive}
-    current = { 0, 3, currentDir };
     turnController(90);
-
   }
 }
 
@@ -1854,10 +1857,10 @@ void houseSegment(int location){
   if(location == 0) {
       if (houses.yellowHouseFound && houses.redHouseFound) {
           if (startingX == 3 && startingY == 5) {
-            setRGBColour(BLUE);
+            sensorLib.setRGBColour(BLUE);
           } else {
               driveToLocation(startingX, startingY);
-              setRGBColour(BLUE);
+              sensorLib.setRGBColour(BLUE);
           }
       }
       // go to 5,5
@@ -1896,10 +1899,10 @@ void houseSegment(int location){
   else if(location == 1){
       if (houses.yellowHouseFound && houses.redHouseFound) {
           if (startingX == 5 && startingY == 2) {
-            setRGBColour(BLUE);
+            sensorLib.setRGBColour(BLUE);
           } else {
               driveToLocation(startingX, startingY);
-              setRGBColour(BLUE);
+              sensorLib.setRGBColour(BLUE);
           }
       }
       // go to 5,0
@@ -1938,10 +1941,10 @@ void houseSegment(int location){
   else if(location == 2) {
       if (houses.yellowHouseFound && houses.redHouseFound) {
           if (startingX == 2 && startingY == 0) {
-            setRGBColour(BLUE);
+            sensorLib.setRGBColour(BLUE);
           } else {
               driveToLocation(startingX, startingY);
-              setRGBColour(BLUE);
+              sensorLib.setRGBColour(BLUE);
           }
       }
       // go to 0,0
@@ -1993,10 +1996,10 @@ void houseSegment(int location){
   else if(location == 3) { 
       if (houses.yellowHouseFound && houses.redHouseFound) {
           if (startingX == 0 && startingY == 3) {
-            setRGBColour(BLUE);
+            sensorLib.setRGBColour(BLUE);
           } else {
               driveToLocation(startingX, startingY);
-              setRGBColour(BLUE);
+              sensorLib.setRGBColour(BLUE);
           }
       }
       // go to 0,5
