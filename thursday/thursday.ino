@@ -70,7 +70,7 @@ struct Position {
     Direction direction;
 };
 
-const int squareDistance = 27;
+const int squareDistance = 25;
 const int sonarAverages = 10;
 
 // Direction S1Dir = { false, false };
@@ -494,9 +494,16 @@ void loop()
     // driveDistance(60);
     // findCandle();
     // driveDistance(60);
-    turnController(90);
-    delay(2000);
-    turnController(-90);
+//    turnController(90);
+//    delay(2000);
+//    turnController(-90);
+//      digitalWrite(fanPin, HIGH);
+    findCandle();
+    Serial.print("MAIN Current Location: ");
+    Serial.print(current.x);
+    Serial.print("   ");
+    Serial.println(current.y);
+    driveAvoidingObstacles(2,4);
 
     // findFood();
     while (true) {}
@@ -1017,26 +1024,28 @@ void driveBackwards(float distance) {
         return;
     }
 
+    // add tolerance since driving towards sound waves
+    distance += 5;
     float frontStartingDis;
     float rearStartingDis;
     int numSmaples = 20;
     float currentDistance;
     float sumDistance = 0;
     int numSquares = floor(distance / squareDistance);
-    do {
-        rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
-        frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
-        sumDistance = frontStartingDis + rearStartingDis;
-        currentDistance = rearStartingDis;
-        if (rearStartingDis < 190 && frontStartingDis > 500) { 
-            Serial.print(rearStartingDis);
-            Serial.print("  ");
-            Serial.println(frontStartingDis);
-            motors.driveBackwards();
-            delay(500);
-            motors.updateSpeeds(0, 0);
-        }
-    } while (sumDistance > 165);
+//    do {
+//        rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
+//        frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
+//        sumDistance = frontStartingDis + rearStartingDis;
+//        currentDistance = rearStartingDis;
+//        if (frontStartingDis > 500 && rearStartingDis < 190) {
+//            Serial.print(rearStartingDis);
+//            Serial.print("  ");
+//            Serial.println(frontStartingDis);
+//            motors.driveBackwards();
+//            delay(500);
+//            motors.updateSpeeds(0, 0);
+//        }
+//    } while (sumDistance > 165);
 
     unsigned long startTime = millis();
     motors.driveBackwards();
@@ -1045,28 +1054,29 @@ void driveBackwards(float distance) {
     }
     motors.updateSpeeds(0, 0);
 
-    if (current.direction.isFacingX) {
-        if (current.direction.isForward) {
-            current.x -= numSquares;
-        } else {
-            current.x += numSquares;
-        }
-    } else {
-        if (current.direction.isForward) {
-            current.y -= numSquares;
-        } else {
-            current.y += numSquares;
-        }
-    }
+//    if (current.direction.isFacingX) {
+//        if (current.direction.isForward) {
+//            current.x -= numSquares;
+//        } else {
+//            current.x += numSquares;
+//        }
+//    } else {
+//        if (current.direction.isForward) {
+//            current.y -= numSquares;
+//        } else {
+//            current.y += numSquares;
+//        }
+//    }
 }
 
 void findCandle() {
     int numSquaresTravelled = 0;
     int flameValue = 999, prevFlameValue = 10000;
-    // NEED TO CONSIDER IF CANDLE IS IN OUR PATH
+
     do {
         if (numSquaresTravelled >= 5) {
             turnController(90);
+            delay(500);
             turnController(90);
             current.direction.isForward = !current.direction.isForward;
         }
@@ -1087,6 +1097,10 @@ void findCandle() {
             numSquaresTravelled++;
             Serial.print("numSquaresTravelled: ");
             Serial.println(numSquaresTravelled);
+            Serial.print("Current Location: ");
+            Serial.print(current.x);
+            Serial.print("  ");
+            Serial.println(current.y);
         }
         Serial.println("Out of inner loop");
     } while(numSquaresTravelled >= 5);
@@ -1095,7 +1109,24 @@ void findCandle() {
 
     if (!sensorLib.checkCandle()) {
         driveBackwards(squareDistance);
-        Serial.print("Candle found");
+        if (current.direction.isFacingX) {
+          if (current.direction.isForward) {
+            current.x--;
+          } else {
+            current.x++;
+          }
+        } else {
+          if (current.direction.isForward) {
+            current.y--;
+          } else {
+            current.y++;
+          }
+        }
+        Serial.print("Went backwards: ");
+        Serial.print(current.x);
+        Serial.print("  ");
+        Serial.println(current.y);
+        Serial.println("Candle found");
 
         turnController(-90);
         if (current.direction.isFacingX) {
@@ -1103,7 +1134,11 @@ void findCandle() {
         }
         current.direction.isFacingX = !current.direction.isFacingX;
     }
-
+    float startingDistance;
+    do {
+      startingDistance = rearSonar.getAverageDistance(10);
+    } while(startingDistance > 170);
+    
     motors.driveForward();
     while (!sensorLib.checkCandle()) {}
     motors.updateSpeeds(0, 0);
@@ -1111,25 +1146,34 @@ void findCandle() {
     bool colorCandleOut = false;
     while (colorCandleOut && frontSonar.getAverageDistance(10) > 5) {
         digitalWrite(fanPin, HIGH);
+        Serial.println("Fan on");
         motors.driveForward();
-        delay(100);
+        delay(750);
         motors.updateSpeeds(0, 0);
-        delay(2000);
-        digitalWrite(fanPin, LOW);
-        delay(500);
-        for (int i = 0; i < 30; i++) {
+        delay(750);
+        for (int i = 0; i <10; i++) {
             colorCandleOut = colorCandleOut || sensorLib.checkCandle();
             delay(50);
         }
         delay(100);
     }
     while (sensorLib.checkCandle()) {
+        digitalWrite(fanPin, HIGH);
+        Serial.println("Fan on");
+        delay(2000);
+        digitalWrite(fanPin, LOW);
         sensorLib.setRGBColour(YELLOW);
     }
     sensorLib.setRGBColour(OFF);
 
-    digitalWrite(fanPin, LOW);
     sensorLib.setRGBColour(RED);
+
+    float endingDistance;
+    do {
+      endingDistance = rearSonar.getAverageDistance(10);
+    } while(endingDistance > 170);
+
+    driveBackwards(endingDistance - startingDistance);
 }
 
 void mapArea() {
