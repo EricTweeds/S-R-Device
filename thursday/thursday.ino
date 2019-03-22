@@ -80,8 +80,8 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
-Direction currentDir = { false, false };
-Position current = {3, 5, currentDir };
+Direction currentDir = { true, false };
+Position current = {3, 3, currentDir };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -220,7 +220,7 @@ void driveDistance(float distance)
         do {
             currentDistance = rearSonar.getAverageDistance(sonarAverages);
             counter++;
-        } while (abs(prevDistance - currentDistance) > 10 * counter); //not super confident with this filtering.  We haven't had problems yet, but it seems sketchy.  CB
+        } while (abs(prevDistance - currentDistance) > 10 * counter);
         prevDistance = currentDistance;
     }
     if (frontSonar.getAverageDistance(sonarAverages) > 5) {
@@ -497,15 +497,15 @@ void loop()
 //    turnController(90);
 //    delay(2000);
 //    turnController(-90);
-//      digitalWrite(fanPin, HIGH);
-    findCandle();
-    Serial.print("MAIN Current Location: ");
-    Serial.print(current.x);
-    Serial.print("   ");
-    Serial.println(current.y);
-    driveAvoidingObstacles(2,4);
+//      digitalWrite(fanPin, HIGH)
+//    Serial.print("MAIN Current Location: ");
+//    Serial.print(current.x);
+//    Serial.print("   ");
+//    Serial.println(current.y);
+//    driveAvoidingObstacles(2,4);
 
-    // findFood();
+    // findCandle();
+    findFood();
     while (true) {}
 
     // driveDistance(60);
@@ -524,7 +524,6 @@ void loop()
 void findFood() {
     bool magnetDetected = false;
     int sandPitsVisited = 0;
-
     int targetX, targetY;
     int landingX, landingY;
 
@@ -532,7 +531,7 @@ void findFood() {
         targetX = 0;
         targetY = 0;
         landingX = 0;
-        landingY = 0;    
+        landingY = 0;
 
         findClosestNotVisited(targetX, targetY, current.x, current.y, mapManager.SAND);
         findBestSquareToLandAt(landingX, landingY, targetX, targetY);
@@ -548,29 +547,41 @@ void findFood() {
         if (current.x > targetX && !current.direction.isFacingX) {
             if (current.direction.isForward) {
                 turnController(90);
+                current.direction.isForward = false;
             } else {
                 turnController(-90);
+                current.direction.isForward = false;
             }
+            current.direction.isFacingX = true;
         } else if (current.x < targetX && !current.direction.isFacingX) {
             if (current.direction.isForward) {
                 turnController(-90);
+                current.direction.isForward = true;
             } else {
                 turnController(90);
+                current.direction.isForward = true;
             }
+            current.direction.isFacingX = true;
         }
 
         if (current.y > targetY && current.direction.isFacingX) {
             if (current.direction.isForward) {
                 turnController(-90);
+                current.direction.isForward = false;
             } else {
                 turnController(90);
+                current.direction.isForward = false;
             }
+            current.direction.isFacingX = false;
         } else if (current.y < targetY && current.direction.isFacingX) {
             if (current.direction.isForward) {
                 turnController(90);
+                current.direction.isForward = true;
             } else {
                 turnController(-90);
+                current.direction.isForward = true;
             }
+            current.direction.isFacingX = false;
         }
 
         Serial.println("Food: Facing correct way");
@@ -1032,20 +1043,31 @@ void driveBackwards(float distance) {
     float currentDistance;
     float sumDistance = 0;
     int numSquares = floor(distance / squareDistance);
-//    do {
-//        rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
-//        frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
-//        sumDistance = frontStartingDis + rearStartingDis;
-//        currentDistance = rearStartingDis;
-//        if (frontStartingDis > 500 && rearStartingDis < 190) {
-//            Serial.print(rearStartingDis);
-//            Serial.print("  ");
-//            Serial.println(frontStartingDis);
-//            motors.driveBackwards();
-//            delay(500);
-//            motors.updateSpeeds(0, 0);
-//        }
-//    } while (sumDistance > 165);
+    // rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
+    // frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
+    // currentDistance = rearStartingDis;
+    // if (frontStartingDis > 500 && rearStartingDis < 190) {
+    //     Serial.print(rearStartingDis);
+    //     Serial.print("  ");
+    //     Serial.println(frontStartingDis);
+    //     motors.driveBackwards();
+    //     delay(500);
+    //     motors.updateSpeeds(0, 0);
+    // }
+   do {
+       rearStartingDis = rearSonar.getAverageDistance(sonarAverages);
+       frontStartingDis = frontSonar.getAverageDistance(sonarAverages);
+       sumDistance = frontStartingDis + rearStartingDis;
+       currentDistance = rearStartingDis;
+       if (frontStartingDis > 500 && rearStartingDis < 190) {
+           Serial.print(rearStartingDis);
+           Serial.print("  ");
+           Serial.println(frontStartingDis);
+           motors.driveBackwards();
+           delay(500);
+           motors.updateSpeeds(0, 0);
+       }
+   } while (sumDistance > 165);
 
     unsigned long startTime = millis();
     motors.driveBackwards();
@@ -1084,7 +1106,7 @@ void findCandle() {
         prevFlameValue = flameValue;
         flameValue = analogRead(flameSensorPin);
 
-        while (numSquaresTravelled < 5 && flameValue < prevFlameValue + 10 && !sensorLib.checkCandle()) {
+        while (numSquaresTravelled < 5 && flameValue < prevFlameValue + 15 && !sensorLib.checkCandle()) {
 
             moveForwardOneSquare();
             
@@ -1211,32 +1233,44 @@ void driveToItem() {
     if (current.x > targetX && !current.direction.isFacingX) {
         if (current.direction.isForward) {
             turnController(90);
+            current.direction.isForward = false;
         } else {
             turnController(-90);
+            current.direction.isForward = false;
         }
+        current.direction.isFacingX = true;
     } else if (current.x < targetX && !current.direction.isFacingX) {
         if (current.direction.isForward) {
             turnController(-90);
+            current.direction.isForward = true;
         } else {
             turnController(90);
+            current.direction.isForward = true;
         }
+        current.direction.isFacingX = true;
     }
 
     if (current.y > targetY && current.direction.isFacingX) {
         if (current.direction.isForward) {
             turnController(-90);
+            current.direction.isForward = false;
         } else {
             turnController(90);
+            current.direction.isForward = false;
         }
+        current.direction.isFacingX = false;
     } else if (current.y < targetY && current.direction.isFacingX) {
         if (current.direction.isForward) {
             turnController(90);
+            current.direction.isForward = true;
         } else {
             turnController(-90);
+            current.direction.isForward = true;
         }
+        current.direction.isFacingX = false;
     }
 
-    char houseType; //We never update houseType
+    char houseType;
     do {
         houseType = sensorLib.determineObject();
     } while(houseType == UNKNOWN);
