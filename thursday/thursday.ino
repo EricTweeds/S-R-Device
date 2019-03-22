@@ -220,7 +220,7 @@ void driveDistance(float distance)
         do {
             currentDistance = rearSonar.getAverageDistance(sonarAverages);
             counter++;
-        } while (abs(prevDistance - currentDistance) > 10 * counter);
+        } while (abs(prevDistance - currentDistance) > 10 * counter); //not super confident with this filtering.  We haven't had problems yet, but it seems sketchy.  CB
         prevDistance = currentDistance;
     }
     if (frontSonar.getAverageDistance(sonarAverages) > 5) {
@@ -524,9 +524,15 @@ void loop()
 void findFood() {
     bool magnetDetected = false;
     int sandPitsVisited = 0;
+
+    int targetX, targetY;
+    int landingX, landingY;
+
     while (!magnetDetected && sandPitsVisited < 3) {
-        int targetX, targetY;
-        int landingX, landingY;
+        targetX = 0;
+        targetY = 0;
+        landingX = 0;
+        landingY = 0;    
 
         findClosestNotVisited(targetX, targetY, current.x, current.y, mapManager.SAND);
         findBestSquareToLandAt(landingX, landingY, targetX, targetY);
@@ -738,6 +744,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 1 && currentY == 5)
     ) {
+        if(
+            (targetX == 0 && targetY == 4)
+            ||
+            (targetX == 0 && targetY == 5)
+            ||
+            (targetX == 1 && targetY == 5)
+        ) {
+            currentSum += abs(currentX - targetX) + abs(currentY -targetY);
+        }
         currentSum += abs(currentX - 0) + abs(currentY - 3);
         return findNumSquaresToLocation(targetX, targetY, 0, 3, currentSum);
     }
@@ -748,6 +763,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 5 && currentY == 1)
     ) {
+        if(
+            (targetX == 4 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 1)
+        ) {
+            currentSum += abs(currentX - targetX) + abs(currentY -targetY);
+        }
         currentSum += abs(currentX - 5) + abs(currentY - 2);
         return findNumSquaresToLocation(targetX, targetY, 5, 2, currentSum);
     }
@@ -758,6 +782,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 5 && currentY == 5)
     ) {
+        if (
+            (targetX == 5 && targetY == 4)
+            ||
+            (targetX == 4 && targetY == 5)
+            ||
+            (targetX == 5 && targetY == 5)
+        ) {
+            currentSum += abs(currentX - targetX) + abs(currentY -targetY);
+        }
         currentSum += abs(currentX - 3) + abs(currentY - 5);
         return findNumSquaresToLocation(targetX, targetY, 3, 5, currentSum);
     }
@@ -768,6 +801,15 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
         ||
         (currentX == 1 && currentY == 0)
     ) {
+        if (
+            (targetX == 0 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+        ) {
+            currentSum += abs(currentX - targetX) + abs(currentY -targetY);
+        }
         currentSum += abs(currentX - 2) + abs(currentY - 0);
         return findNumSquaresToLocation(targetX, targetY, 2, 0, currentSum);
     }
@@ -787,7 +829,7 @@ int findNumSquaresToLocation(int targetX, int targetY, int currentX, int current
             ((targetX == 0 || targetX == 1) && targetY == 0)
         )
         {
-            return currentSum + abs(currentY - targetY);
+            return currentSum + abs(currentX - targetX) + abs(currentY - targetY);
         }
         else if (targetX == 0 && targetY == 1){
             currentSum += abs(currentX - 0) + abs(currentY - 0);
@@ -1194,9 +1236,9 @@ void driveToItem() {
         }
     }
 
-    char houseType;
+    char houseType; //We never update houseType
     do {
-        sensorLib.determineObject();
+        houseType = sensorLib.determineObject();
     } while(houseType == UNKNOWN);
     if (houseType == GROUP) {
         sensorLib.setRGBColour(RED);
@@ -1468,7 +1510,9 @@ void driveToLocation(int targetX, int targetY) {
         bool isFacingWrongDirection = (current.direction.isForward) ? current.x > targetX : current.x < targetX;
         if (isFacingWrongDirection && current.y == targetY) {
             // y is correct but facing wrong dir
-            turnController(180);
+            turnController(90);
+            delay(500);
+            turnController(90);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
             int directionCompensator = (current.direction.isForward) ? 1 : -1;
@@ -1485,7 +1529,9 @@ void driveToLocation(int targetX, int targetY) {
         bool isFacingWrongDirection = (current.direction.isForward) ? current.y > targetY : current.y < targetY;
         if (isFacingWrongDirection && current.x == targetX) {
             // y is correct but facing wrong dir
-            turnController(180);
+            turnController(90);
+            delay(500);
+            turnController(90);
             current.direction.isForward = !current.direction.isForward;
         } else if (isFacingWrongDirection) {
             int directionCompensator = (current.direction.isForward) ? 1 : -1;
