@@ -80,8 +80,8 @@ const int sonarAverages = 10;
 // Position S1 = { 3, 5, currentDir };
 
 // Start forward facing y @ (0,0)
-Direction currentDir = { false, false };
-Position current = { 3, 5, currentDir };
+Direction currentDir = { false, true };
+Position current = { 2, 0, currentDir };
 
 Motor leftMotor = {ENA, Left1, Left2};
 Motor rightMotor = {ENB, Right1, Right2};
@@ -246,6 +246,9 @@ void driveDistance(float distance)
 
 void turnController(float setP)
 {
+    Serial.print("Turning: ");
+    Serial.println(setP);
+
     float dt = 0.01;
     float kp = 0.1, ki = 0.05, kd = 0.01;
     float integral = 0.0;
@@ -255,10 +258,15 @@ void turnController(float setP)
 
     bool turned = false;
     float currAngle = 0;
+    int numSmaples = 10;
+    float sumAngles = 0;
     float startingAngle;
-    while (!getAngle(startingAngle))
-    {
+    for (int i = 0; i < numSmaples; i++) {
+        while (!getAngle(startingAngle)) {}
+        sumAngles += startingAngle;
     }
+    startingAngle = sumAngles / numSmaples;
+
     while (!turned)
     {
         integral -= error[index] * dt;
@@ -480,10 +488,12 @@ void loop()
     // Serial.print("  ");
     // Serial.println(frontSonar.getAverageDistance(10));
 
-    // mapArea();
+    mapArea();
     // driveDistance(60);
-    findFood();
+
+    // findFood();
     while (true) {}
+
     // driveDistance(60);
     // while(true) {}
 
@@ -1079,10 +1089,15 @@ void moveForwardOneSquare() {
             targetY--;
         }
     }
+
     char groundType = mapManager.getMapValue(targetX, targetY);
     if (groundType == mapManager.GROUND || groundType == UNKNOWN) {
         driveDistance(squareDistance);
-    } else {
+    } 
+    // else if (groundType == mapManager.ITEM) {
+
+    // } 
+    else {
         if (current.direction.isFacingX) {
             int firstY = targetY + 1;
             int secondY = targetY - 1;
@@ -1100,7 +1115,21 @@ void moveForwardOneSquare() {
                 targetY = firstY;
             }
         } else {
-
+            int firstX = targetX + 1;
+            int secondX = targetX - 1;
+            int firstDis = findNumSquaresToLocation(firstX, targetY, current.x, current.y, 0);
+            int secondDis = findNumSquaresToLocation(secondX, targetY, current.x, current.y, 0);
+            if (firstDis == secondDis) {
+                if (current.x <= 2) {
+                    targetX = firstX;
+                } else {
+                    targetX = secondX;
+                }
+            } else if (firstDis > secondDis) {
+                targetX = secondX;
+            } else {
+                targetX = firstX;
+            }
         }
         driveAvoidingObstacles(targetX, targetY);
     }
@@ -1109,16 +1138,26 @@ void moveForwardOneSquare() {
 void mapArea() {
     int numSquaresTravelled = 0;
     int x, y;
-    while (numSquaresTravelled < 5 && !mapManager.getLocation(x, y, mapManager.ITEM)) {
-        mapManager.printMap();
+    int flameValue = 1000;
+    mapCurrentLocation();
+    mapManager.printMap();
+    while (numSquaresTravelled < 5 && flameValue > 950) { //&& !mapManager.getLocation(x, y, mapManager.ITEM)) {
         moveForwardOneSquare();
+        mapCurrentLocation();
+        mapManager.printMap();
+        Serial.print("Flame Value: ");
+        flameValue = analogRead(flameSensorPin);
+        Serial.println(flameValue);
+        
         numSquaresTravelled++;
+        Serial.print("numSquaresTravelled: ");
+        Serial.println(numSquaresTravelled);
     }
     mapManager.printMap();
 
     Serial.print("Found item");
     
-    driveToItem();
+    // driveToItem();
 }
 
 void driveToItem() {
@@ -1186,6 +1225,8 @@ int roundToSquare(float distanceValue) {
     }
     else if (distanceValue >= 150+tolerance && distanceValue < 180+tolerance) {
         return 6;
+    } else  {
+        return 10;
     }
 }
 
@@ -1255,8 +1296,104 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         ||
         (current.x == 1 && current.y == 5)
     ) {
-        innerDriveAvoidingObstacles(0, 3);
+        if (
+            (targetX == 0 && targetY == 4)
+            ||
+            (targetX == 0 && targetY == 5)
+            ||
+            (targetX == 1 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(0, 3);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 4 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 0)
+        ||
+        (current.x == 5 && current.y == 1)
+    ) {
+        if (
+            (targetX == 4 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 0)
+            ||
+            (targetX == 5 && targetY == 1)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(5, 2);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 5 && current.y == 4)
+        ||
+        (current.x == 4 && current.y == 5)
+        ||
+        (current.x == 5 && current.y == 5)
+    ) {
+        if (
+            (targetX == 5 && targetY == 4)
+            ||
+            (targetX == 4 && targetY == 5)
+            ||
+            (targetX == 5 && targetY == 5)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 5);
+            driveAvoidingObstacles(targetX, targetY);
+        }
+    }
+    else if (
+        (current.x == 0 && current.y == 0)
+        ||
+        (current.x == 0 && current.y == 1)
+        ||
+        (current.x == 1 && current.y == 0)
+    ) {
+        if (
+            (targetX == 0 && targetY == 0)
+            ||
+            (targetX == 0 && targetY == 1)
+            ||
+            (targetX == 1 && targetY == 0)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(2, 0);
+            if (targetX == 2 && targetY == 1) {
+                innerDriveAvoidingObstacles(2, 1);
+            } else {
+                driveAvoidingObstacles(targetX, targetY);
+            }
+        }
+    }
+    else if (
+        (current.x == 1 && current.y == 2)
+    ) {
+        innerDriveAvoidingObstacles(1, 3);
         driveAvoidingObstacles(targetX, targetY);
+    }
+    else if (
+        (current.x == 2 && current.y == 0)
+        ||
+        (current.x == 2 && current.y == 1)
+    ) {
+        if (
+            (targetX == 2 && targetY == 0)
+            ||
+            (targetY == 2 && targetY == 1)
+        ) {
+            innerDriveAvoidingObstacles(targetX, targetY);
+        } else {
+            innerDriveAvoidingObstacles(3, 1);
+            driveAvoidingObstacles(targetX, targetY);
+        }
     }
     else if (
         (targetX == 0 && targetY == 4)
@@ -1269,16 +1406,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 4 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 0)
-        ||
-        (current.x == 5 && current.y == 1)
-    ) {
-        innerDriveAvoidingObstacles(5, 2);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 4 && targetY == 0)
         ||
         (targetX == 5 && targetY == 0)
@@ -1289,16 +1416,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 5 && current.y == 4)
-        ||
-        (current.x == 4 && current.y == 5)
-        ||
-        (current.x == 5 && current.y == 5)
-    ) {
-        innerDriveAvoidingObstacles(3, 5);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 5 && targetY == 4)
         ||
         (targetX == 4 && targetY == 5)
@@ -1307,20 +1424,6 @@ void driveAvoidingObstacles(int targetX, int targetY) {
     ) {
         innerDriveAvoidingObstacles(3, 5);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 0 && current.y == 0)
-        ||
-        (current.x == 0 && current.y == 1)
-        ||
-        (current.x == 1 && current.y == 0)
-    ) {
-        innerDriveAvoidingObstacles(2, 0);
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 0 && targetY == 0)
@@ -1334,28 +1437,10 @@ void driveAvoidingObstacles(int targetX, int targetY) {
         innerDriveAvoidingObstacles(targetX, targetY);
     }
     else if (
-        (current.x == 1 && current.y == 2)
-    ) {
-        innerDriveAvoidingObstacles(1, 3);
-        driveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
         (targetX == 1 && targetY == 2)
     ) {
         innerDriveAvoidingObstacles(1, 3);
         innerDriveAvoidingObstacles(targetX, targetY);
-    }
-    else if (
-        (current.x == 2 && current.y == 0)
-        ||
-        (current.x == 2 && current.y == 1)
-    ) {
-        if (targetX == 2 && targetY == 1) {
-            innerDriveAvoidingObstacles(2, 1);
-        } else {
-            innerDriveAvoidingObstacles(3, 1);
-            driveAvoidingObstacles(targetX, targetY);
-        }
     }
     else if (
         (targetX == 2 && targetY == 0)
@@ -1507,36 +1592,63 @@ void mapCurrentLocation() {
     // Get distances from sonars
     float rightDistance = rightSonar.getAverageDistance(10);
     float leftDistance = leftSonar.getAverageDistance(10);
+    float frontDistance = frontSonar.getAverageDistance(10);
+    int countBadData = 0;
+
+    while(rightDistance > 200 && countBadData < 10){
+        rightDistance = rightSonar.getAverageDistance(10);
+        countBadData++;
+    }
+    
+    countBadData = 0;
+    while(leftDistance > 200 && countBadData < 10){
+        leftDistance = leftSonar.getAverageDistance(10);
+        countBadData++;
+    }
+
+    countBadData = 0;
+    while(frontDistance > 200 && countBadData < 10){
+        frontDistance = frontSonar.getAverageDistance(10);
+        countBadData++;
+    }
+    
     Serial.print("Right: ");
     Serial.println(rightDistance);
     Serial.print("Left: ");
     Serial.println(leftDistance);
+    Serial.print("Front: ");
+    Serial.println(frontDistance);
 
     // Find number of squares before something has been detected
     // This is assuming the given distance from sonar reaches the end
     // of the last square
     int rightSquares = roundToSquare(rightDistance);
     int leftSquares = roundToSquare(leftDistance);
+    int frontSquares = roundToSquare(frontDistance);
     Serial.print("Left Square: ");
     Serial.println(leftSquares);
     Serial.print("Right Square: ");
     Serial.println(rightSquares);
+    Serial.print("Front Square: ");
+    Serial.println(frontSquares);
 
     if (current.direction.isFacingX) {
         // Facing x dir
 
         // Set pos and neg directions based on robot direction
-        int positiveSquares, negativeSquares;
+        int positiveSquares, negativeSquares, frontX;
         if (current.direction.isForward) {
             positiveSquares = rightSquares;
             negativeSquares = leftSquares;
+            frontX = current.x + frontSquares;
         } else {
             positiveSquares = leftSquares;
             negativeSquares = rightSquares;
+            frontX = current.x - frontSquares;
         }
 
-        // Set the last square to ITEM == something here
-        // The last square is not guaranteed to be an objective, eg could be water square
+        mapManager.setMapValue(frontX, current.y, mapManager.ITEM);
+
         if (positiveSquares <= 2) {
             mapManager.setMapValue(current.x, current.y + positiveSquares, mapManager.ITEM);
         }
@@ -1552,17 +1664,19 @@ void mapCurrentLocation() {
         // Facing y dir
 
         // Set pos and neg directions based on robot direction
-        int positiveSquares, negativeSquares;
+        int positiveSquares, negativeSquares, frontY;
         if (current.direction.isForward) {
             positiveSquares = leftSquares;
             negativeSquares = rightSquares;
+            frontY = current.y + frontSquares;
         } else {
             positiveSquares = rightSquares;
             negativeSquares = leftSquares;
+            frontY = current.y - frontSquares;
         }
 
-        // Set the last square to ITEM == something here
-        // The last square is not guaranteed to be an objective, eg could be water square
+        mapManager.setMapValue(current.x, frontY, mapManager.ITEM);
+
         if (positiveSquares <= 2) {
             mapManager.setMapValue(current.x + positiveSquares, current.y, mapManager.ITEM);
         }
