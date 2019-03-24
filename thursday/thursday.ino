@@ -527,14 +527,42 @@ void loop()
     // Serial.println(rightSonar.getAverageDistance(30));
     // Serial.println(leftSonar.getAverageDistance(30));
     // Serial.println("-----------");
-    current.x = 0;
-    current.y = 3;
-    current.direction.isFacingX = true;
-    current.direction.isForward = true;
-    mapArea();
-    // findFood();
-    // digitalWrite(fanPin, HIGH);
+
+    // current.x = 2;
+    // current.y = 0;
+    // current.direction.isFacingX = false;
+    // current.direction.isForward = true;
     // findCandle();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+    // sensorLib.setRGBColour(OFF);
+
+    // current.x = 3;
+    // current.y = 5;
+    // current.direction.isFacingX = false;
+    // current.direction.isForward = false;
+    // findFood();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+    // sensorLib.setRGBColour(OFF);
+
+    // current.x = 2;
+    // current.y = 0;
+    // current.direction.isFacingX = false;
+    // current.direction.isForward = true;
+    // mapArea();
+
+    // while(digitalRead(buttonPin) != HIGH) {
+    //     sensorLib.setRGBColour(AQUA);
+    // }
+    // sensorLib.setRGBColour(OFF);
+
+    driveDistance(120);
+
     while(true) {}
 
     // Serial.print(rearSonar.getAverageDistance(10));
@@ -1262,18 +1290,17 @@ void findCandle() {
 
     bool colorCandleOut = false;
     float frontDistance = frontSonar.getAverageDistance(10);
-    while (colorCandleOut && (frontDistance > 5 && frontDistance < 1300)) {
+    while (!colorCandleOut && (frontDistance > 5 && frontDistance < 1300)) {
         digitalWrite(fanPin, HIGH);
         Serial.println("Fan on");
         motors.driveForward();
         delay(750);
         motors.updateSpeeds(0, 0);
-        delay(750);
+        delay(400);
         for (int i = 0; i < 10; i++) {
-            colorCandleOut = colorCandleOut || sensorLib.checkCandle();
+            colorCandleOut = colorCandleOut || !sensorLib.checkCandle();
             delay(50);
         }
-        delay(100);
         frontDistance = frontSonar.getAverageDistance(10);
     }
     while (sensorLib.checkCandle()) {
@@ -1822,7 +1849,7 @@ void mapCurrentLocation() {
     // Get distances from sonars
     float rightDistance = rightSonar.getAverageDistance(10);
     float leftDistance = leftSonar.getAverageDistance(10);
-    float frontDistance = frontSonar.getAverageDistance(10);
+    // float frontDistance = frontSonar.getAverageDistance(10);
     int countBadData = 0;
 
     while(rightDistance > 200 && countBadData < 10){
@@ -1836,31 +1863,31 @@ void mapCurrentLocation() {
         countBadData++;
     }
 
-    countBadData = 0;
-    while(frontDistance > 200 && countBadData < 10){
-        frontDistance = frontSonar.getAverageDistance(10);
-        countBadData++;
-    }
+    // countBadData = 0;
+    // while(frontDistance > 200 && countBadData < 10){
+    //     frontDistance = frontSonar.getAverageDistance(10);
+    //     countBadData++;
+    // }
     
     Serial.print("Right: ");
     Serial.println(rightDistance);
     Serial.print("Left: ");
     Serial.println(leftDistance);
-    Serial.print("Front: ");
-    Serial.println(frontDistance);
+    // Serial.print("Front: ");
+    // Serial.println(frontDistance);
 
     // Find number of squares before something has been detected
     // This is assuming the given distance from sonar reaches the end
     // of the last square
     int rightSquares = roundToSquare(rightDistance);
     int leftSquares = roundToSquare(leftDistance);
-    int frontSquares = roundToSquare(frontDistance);
+    // int frontSquares = roundToSquare(frontDistance);
     Serial.print("Left Square: ");
     Serial.println(leftSquares);
     Serial.print("Right Square: ");
     Serial.println(rightSquares);
-    Serial.print("Front Square: ");
-    Serial.println(frontSquares);
+    // Serial.print("Front Square: ");
+    // Serial.println(frontSquares);
 
     if (current.direction.isFacingX) {
         // Facing x dir
@@ -1870,16 +1897,16 @@ void mapCurrentLocation() {
         if (current.direction.isForward) {
             positiveSquares = rightSquares;
             negativeSquares = leftSquares;
-            frontX = current.x + frontSquares;
+            // frontX = current.x + frontSquares;
         } else {
             positiveSquares = leftSquares;
             negativeSquares = rightSquares;
-            frontX = current.x - frontSquares;
+            // frontX = current.x - frontSquares;
         }
 
-        if (frontSquares == 1) {
-            mapManager.setMapValue(frontX, current.y, mapManager.ITEM);
-        }
+        // if (frontSquares == 1) {
+        //     mapManager.setMapValue(frontX, current.y, mapManager.ITEM);
+        // }
 
         if (positiveSquares <= 3) {
             mapManager.setMapValue(current.x, current.y + positiveSquares, mapManager.ITEM);
@@ -1895,16 +1922,16 @@ void mapCurrentLocation() {
         if (current.direction.isForward) {
             positiveSquares = leftSquares;
             negativeSquares = rightSquares;
-            frontY = current.y + frontSquares;
+            // frontY = current.y + frontSquares;
         } else {
             positiveSquares = rightSquares;
             negativeSquares = leftSquares;
-            frontY = current.y - frontSquares;
+            // frontY = current.y - frontSquares;
         }
 
-        if (frontSquares == 1) {
-            mapManager.setMapValue(current.x, frontY, mapManager.ITEM);            
-        }
+        // if (frontSquares == 1) {
+        //     mapManager.setMapValue(current.x, frontY, mapManager.ITEM);            
+        // }
 
         if (positiveSquares <= 3) {
             mapManager.setMapValue(current.x + positiveSquares, current.y, mapManager.ITEM);
