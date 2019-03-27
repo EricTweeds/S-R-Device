@@ -80,7 +80,7 @@ void MapManagerLib::setMapValue(int x, int y, char value) {
     if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {
         return;
     }
-    if (MAP[x][y] != GROUND) {
+    if (MAP[x][y] != GROUND && MAP[x][y] != ITEM) {
         return;
     }
     MAP[x][y] = value;
@@ -93,6 +93,15 @@ void MapManagerLib::setVisited(int x, int y) {
         return;
     }
     visited[x][y] = true;
+}
+
+bool MapManagerLib::getVisited(int x, int y) {
+    // assuming value is an acceptable char value
+    // assuming that x and y are less than 6
+    if (x < 0 || x > size - 1 || y < 0 || y > size - 1) {
+        return false;
+    }
+    return visited[x][y];
 }
 
 char MapManagerLib::getMapValue(int x, int y) {
